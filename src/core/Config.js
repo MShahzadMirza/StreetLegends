@@ -1,3 +1,10 @@
+/*
+=====================================
+Street Legends
+Configuration
+=====================================
+*/
+
 class Config {
 
     static WORLD = {
@@ -14,13 +21,24 @@ class Config {
 
     };
 
-    static COLORS = {
+    static TREE = {
 
-        SKY: new BABYLON.Color4(0.53, 0.81, 0.98, 1),
+        TRUNK_HEIGHT: 2,
+        TRUNK_DIAMETER: 0.5,
 
-        GRASS: new BABYLON.Color3(0.25, 0.55, 0.25),
+        LEAVES_DIAMETER: 2.5
 
-        ROAD: new BABYLON.Color3(0.18, 0.18, 0.18)
+    };
+
+    static ROCK = {
+
+        SIZE: 1
+
+    };
+
+    static BUSH = {
+
+        SIZE: 1.2
 
     };
 

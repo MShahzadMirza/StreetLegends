@@ -25,6 +25,9 @@ const ground = new Ground(scene);
 // Road
 const road = new Road(scene);
 
+// Environment
+const environment = new Environment(scene);
+
 // Render Loop
 engine.runRenderLoop(() => {
 
