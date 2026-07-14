@@ -28,10 +28,27 @@ const road = new Road(scene);
 // Environment
 const environment = new Environment(scene);
 
+const input = new Input();
+
+const car = new Car(scene);
+
 // Render Loop
 engine.runRenderLoop(() => {
 
+    car.update(input);
     scene.render();
+
+    if (input.forward) {
+
+    console.log("Forward");
+
+}
+
+if (input.left) {
+
+    console.log("Left");
+
+}
 
 });
 
