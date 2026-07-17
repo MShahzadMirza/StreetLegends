@@ -42,4 +42,34 @@ class Config {
 
     };
 
+    // CAR Model by Ignition Labs [CC-BY] via Poly Pizza
+    // https://poly.pizza/m/5zUWP5UsLg-
+    static CAR = {
+
+        // Model
+        MODEL_PATH: "assets/models/cars/",
+        MODEL_FILE: "Lamborghini.glb",
+
+        // Visual adjustments
+        SCALE: 0.008,
+
+        // Rotation (adjust after testing)
+        ROTATION_Y: 0,
+
+        // Visual offset
+        OFFSET: new BABYLON.Vector3(
+            0,
+            -0.10,
+            0
+        ),
+
+        // Spawn point
+        START_POSITION: new BABYLON.Vector3(
+            0,
+            0,
+            -70
+        )
+
+    };
+
 }

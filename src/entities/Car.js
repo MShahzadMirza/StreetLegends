@@ -33,78 +33,50 @@ class Car {
             this.scene
         );
 
-        // -----------------------
-        // Body
-        // -----------------------
-
-        const body = BABYLON.MeshBuilder.CreateBox(
-            "body",
-            {
-                width: 2,
-                height: 0.6,
-                depth: 4
-            },
+        this.modelRoot = new BABYLON.TransformNode(
+            "carModel",
             this.scene
         );
 
-        body.position.y = 0.6;
+        this.modelRoot.parent = this.root;
 
-        body.parent = this.root;
+        BABYLON.SceneLoader.ImportMesh(
 
-        const bodyMaterial = new BABYLON.StandardMaterial(
-            "bodyMat",
-            this.scene
+            "",
+
+            Config.CAR.MODEL_PATH,
+
+            Config.CAR.MODEL_FILE,
+
+            this.scene,
+
+            (meshes) => {
+
+                // Parent ONLY the imported root
+                meshes[0].parent = this.modelRoot;
+
+                // Visual settings
+                this.modelRoot.scaling.setAll(
+                    Config.CAR.SCALE
+                );
+
+                this.modelRoot.rotation.y =
+                    Config.CAR.ROTATION_Y;
+
+                this.modelRoot.position.copyFrom(
+                    Config.CAR.OFFSET
+                );
+
+                // Physics / gameplay position
+                this.root.position.copyFrom(
+                    Config.CAR.START_POSITION
+                );
+
+                console.log("✅ Lamborghini Loaded");
+
+            }
+
         );
-
-        bodyMaterial.diffuseColor = new BABYLON.Color3(
-            0.8,
-            0.1,
-            0.1
-        );
-
-        body.material = bodyMaterial;
-
-        // -----------------------
-        // Cabin
-        // -----------------------
-
-        const cabin = BABYLON.MeshBuilder.CreateBox(
-            "cabin",
-            {
-                width: 1.4,
-                height: 0.7,
-                depth: 2
-            },
-            this.scene
-        );
-
-        cabin.position.y = 1.1;
-        cabin.position.z = -0.2;
-
-        cabin.parent = this.root;
-
-        const cabinMaterial = new BABYLON.StandardMaterial(
-            "glass",
-            this.scene
-        );
-
-        cabinMaterial.diffuseColor = new BABYLON.Color3(
-            0.6,
-            0.8,
-            1
-        );
-
-        cabin.material = cabinMaterial;
-
-        // -----------------------
-        // Wheels
-        // -----------------------
-
-        this.createWheel(-0.9, 0.3, 1.3);
-        this.createWheel(0.9, 0.3, 1.3);
-
-        this.createWheel(-0.9, 0.3, -1.3);
-        this.createWheel(0.9, 0.3, -1.3);
 
     }
 
