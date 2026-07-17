@@ -116,40 +116,6 @@ class Car {
 
             }
 
-            this.steeringPivots = {};
-            this.spinPivots = {};
-
-            this.steeringPivots.frontLeft =
-                this.createSteeringPivot(
-                    this.wheels.frontLeft
-                );
-
-            this.spinPivots.frontLeft =
-                this.createSpinPivot(
-                    this.wheels.frontLeft
-                );
-
-
-            this.steeringPivots.frontRight =
-                this.createSteeringPivot(
-                    this.wheels.frontRight
-                );
-
-            this.spinPivots.frontRight =
-                this.createSpinPivot(
-                    this.wheels.frontRight
-                );
-
-            this.spinPivots.rearLeft =
-                this.createSpinPivot(
-                    this.wheels.rearLeft
-                );
-
-            this.spinPivots.rearRight =
-                this.createSpinPivot(
-                    this.wheels.rearRight
-                );
-
             // ----------------------------
             // Visual settings
             // ----------------------------
@@ -554,8 +520,9 @@ class Car {
 
         // Rotate front wheels
 
-        this.steeringPivots.frontLeft.rotation.y = this.steeringAngle;
-        this.steeringPivots.frontRight.rotation.y = this.steeringAngle;
+        this.wheels.frontLeft.rotation.y = this.steeringAngle;
+        this.wheels.frontRight.rotation.y = this.steeringAngle;
+        
 
         // ----------------------------
         // Wheel Spin
@@ -577,54 +544,6 @@ class Car {
 
         this.wheels.rearRight.rotation.x =
             this.wheelRotation;
-
-    }
-
-    createSteeringPivot(wheel) {
-
-        const center =
-            wheel.getBoundingInfo()
-                .boundingBox
-                .centerWorld
-                .clone();
-
-        const steeringPivot =
-            new BABYLON.TransformNode(
-                wheel.name + "_SteeringPivot",
-                this.scene
-            );
-
-        steeringPivot.parent = wheel.parent;
-
-        steeringPivot.setAbsolutePosition(center);
-
-        wheel.setParent(steeringPivot, true);
-
-        return steeringPivot;
-
-    }
-
-    createSpinPivot(wheel) {
-
-        const center =
-            wheel.getBoundingInfo()
-                .boundingBox
-                .centerWorld
-                .clone();
-
-        const spinPivot =
-            new BABYLON.TransformNode(
-                wheel.name + "_SpinPivot",
-                this.scene
-            );
-
-        spinPivot.parent = wheel.parent;
-
-        spinPivot.setAbsolutePosition(center);
-
-        wheel.setParent(spinPivot, true);
-
-        return spinPivot;
 
     }
 
