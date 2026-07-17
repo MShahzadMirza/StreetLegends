@@ -32,10 +32,13 @@ const input = new Input();
 
 const car = new Car(scene);
 
+const camera = new CameraController(scene, car);
+
 // Render Loop
 engine.runRenderLoop(() => {
 
     car.update(input);
+    camera.update();
     scene.render();
 
     if (input.forward) {
