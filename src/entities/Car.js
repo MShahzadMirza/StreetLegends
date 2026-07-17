@@ -36,6 +36,7 @@ class Car {
         this.maxSteeringAngle = BABYLON.Tools.ToRadians(Config.MAX_STEER_LOW_SPEED);
 
         this.wheelRotation = 0;
+        this.wheelRadius = 0.35;
 
         this.steeringSpeed = BABYLON.Tools.ToRadians(140);
         this.steeringReturnSpeed = BABYLON.Tools.ToRadians(200);
@@ -115,26 +116,39 @@ class Car {
 
             }
 
-            this.wheelPivots = {
+            this.steeringPivots = {};
+            this.spinPivots = {};
 
-                frontLeft: this.createWheelPivot(
+            this.steeringPivots.frontLeft =
+                this.createSteeringPivot(
                     this.wheels.frontLeft
-                ),
+                );
 
-                frontRight: this.createWheelPivot(
+            this.spinPivots.frontLeft =
+                this.createSpinPivot(
+                    this.wheels.frontLeft
+                );
+
+
+            this.steeringPivots.frontRight =
+                this.createSteeringPivot(
                     this.wheels.frontRight
-                ),
+                );
 
-                rearLeft: this.createWheelPivot(
+            this.spinPivots.frontRight =
+                this.createSpinPivot(
+                    this.wheels.frontRight
+                );
+
+            this.spinPivots.rearLeft =
+                this.createSpinPivot(
                     this.wheels.rearLeft
-                ),
+                );
 
-                rearRight: this.createWheelPivot(
+            this.spinPivots.rearRight =
+                this.createSpinPivot(
                     this.wheels.rearRight
-                )
-
-            };
-
+                );
 
             // ----------------------------
             // Visual settings
@@ -540,12 +554,33 @@ class Car {
 
         // Rotate front wheels
 
-        this.wheelPivots.frontLeft.rotation.y = this.steeringAngle;
-        this.wheelPivots.frontRight.rotation.y = this.steeringAngle;
+        this.steeringPivots.frontLeft.rotation.y = this.steeringAngle;
+        this.steeringPivots.frontRight.rotation.y = this.steeringAngle;
+
+        // ----------------------------
+        // Wheel Spin
+        // ----------------------------
+
+        // Convert travelled distance into wheel rotation
+
+        this.wheelRotation +=
+            this.speed / this.wheelRadius;
+
+        this.wheels.frontLeft.rotation.x =
+            this.wheelRotation;
+
+        this.wheels.frontRight.rotation.x =
+            this.wheelRotation;
+
+        this.wheels.rearLeft.rotation.x =
+            this.wheelRotation;
+
+        this.wheels.rearRight.rotation.x =
+            this.wheelRotation;
 
     }
 
-    createWheelPivot(wheel) {
+    createSteeringPivot(wheel) {
 
         const center =
             wheel.getBoundingInfo()
@@ -553,24 +588,43 @@ class Car {
                 .centerWorld
                 .clone();
 
-        const pivot = new BABYLON.TransformNode(
-            wheel.name + "_Pivot",
-            this.scene
-        );
+        const steeringPivot =
+            new BABYLON.TransformNode(
+                wheel.name + "_SteeringPivot",
+                this.scene
+            );
 
-        // Parent pivot where wheel currently is
-        pivot.parent = wheel.parent;;
+        steeringPivot.parent = wheel.parent;
 
-        // Place pivot at wheel center
-        pivot.setAbsolutePosition(center);
+        steeringPivot.setAbsolutePosition(center);
 
-        // Preserve wheel world transform
-        wheel.setParent(pivot, true);
+        wheel.setParent(steeringPivot, true);
 
-        // Reset wheel local transform
-        wheel.scaling.set(1, 1, 1);
+        return steeringPivot;
 
-        return pivot;
+    }
+
+    createSpinPivot(wheel) {
+
+        const center =
+            wheel.getBoundingInfo()
+                .boundingBox
+                .centerWorld
+                .clone();
+
+        const spinPivot =
+            new BABYLON.TransformNode(
+                wheel.name + "_SpinPivot",
+                this.scene
+            );
+
+        spinPivot.parent = wheel.parent;
+
+        spinPivot.setAbsolutePosition(center);
+
+        wheel.setParent(spinPivot, true);
+
+        return spinPivot;
 
     }
 

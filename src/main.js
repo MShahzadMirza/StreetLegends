@@ -33,6 +33,7 @@ Main Entry
     const car = new Car(scene);
 
     await car.initialize();
+    window.thisCar = car;
 
     const camera = new CameraController(scene, car);
 
