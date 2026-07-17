@@ -37,7 +37,6 @@ class Car {
 
     }
 
-
     async initialize() {
 
         try {
@@ -54,10 +53,47 @@ class Car {
 
             );
 
+
             // Keep imported hierarchy intact
             result.meshes[0].parent = this.modelRoot;
 
-            // Visual adjustments
+            // ----------------------------
+            // Save mesh references
+            // ----------------------------
+
+            this.body = result.meshes.find(mesh =>
+                mesh.name.includes("Body")
+            );
+
+            this.glass = result.meshes.find(mesh =>
+                mesh.name.includes("Glass")
+            );
+
+            this.wheels = {
+
+                frontLeft: result.meshes.find(mesh =>
+                    mesh.name.includes("Wheel_FL")
+                ),
+
+                frontRight: result.meshes.find(mesh =>
+                    mesh.name.includes("Wheel_FR")
+                ),
+
+                rearLeft: result.meshes.find(mesh =>
+                    mesh.name.includes("Wheel_RL")
+                ),
+
+                rearRight: result.meshes.find(mesh =>
+                    mesh.name.includes("Wheel_RR")
+                )
+
+            };
+
+
+            // ----------------------------
+            // Visual settings
+            // ----------------------------
+
             this.modelRoot.scaling.setAll(
                 Config.CAR.SCALE
             );
@@ -69,14 +105,22 @@ class Car {
                 Config.CAR.OFFSET
             );
 
+            // Center the model
+            this.centerModel(result.meshes);
+
+
             // Gameplay position
             this.root.position.copyFrom(
                 Config.CAR.START_POSITION
             );
 
+            // Debug
+            this.inspectModel(result.meshes);
+
             this.loaded = true;
 
             console.log("✅ Car Loaded");
+
 
         }
         catch (error) {
@@ -170,5 +214,63 @@ class Car {
         );
 
     }
+
+    centerModel(meshes) {
+
+        const body = meshes.find(m =>
+            m.name.includes("Body")
+        );
+
+        if (!body)
+            return;
+
+        const box = body.getBoundingInfo().boundingBox;
+
+        const center = box.center;
+
+        this.modelRoot.position.x = -center.x * Config.CAR.SCALE;
+        this.modelRoot.position.z = -center.z * Config.CAR.SCALE;
+
+    }
+
+    inspectModel(meshes) {
+
+        console.group("🚗 Vehicle Inspector");
+
+        meshes.forEach(mesh => {
+
+            console.log(
+                mesh.name,
+                mesh.getClassName()
+            );
+
+        });
+
+        const body = meshes.find(m =>
+            m.name.includes("Body")
+        );
+
+        if (body) {
+
+            const box = body.getBoundingInfo().boundingBox;
+
+            console.log("Body Size");
+
+            console.table({
+
+                Width: box.extendSize.x * 2,
+
+                Height: box.extendSize.y * 2,
+
+                Length: box.extendSize.z * 2
+
+            });
+
+        }
+
+        console.groupEnd();
+
+    }
+
 
 }
