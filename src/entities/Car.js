@@ -107,7 +107,7 @@ class Car {
 
             // Center the model
             this.centerModel(result.meshes);
-
+            this.alignToGround();
 
             // Gameplay position
             this.root.position.copyFrom(
@@ -115,7 +115,7 @@ class Car {
             );
 
             // Debug
-            this.inspectModel(result.meshes);
+            this.inspectVehicle(result.meshes);
 
             this.loaded = true;
 
@@ -215,6 +215,20 @@ class Car {
 
     }
 
+    alignToGround() {
+
+        if (!this.body)
+            return;
+
+        const box = this.body.getBoundingInfo().boundingBox;
+
+        const bottom = box.minimum.y;
+
+        this.modelRoot.position.y =
+            -bottom * Config.CAR.SCALE;
+
+    }
+
     centerModel(meshes) {
 
         const body = meshes.find(m =>
@@ -233,7 +247,7 @@ class Car {
 
     }
 
-    inspectModel(meshes) {
+    inspectVehicle(meshes) {
 
         console.group("🚗 Vehicle Inspector");
 
