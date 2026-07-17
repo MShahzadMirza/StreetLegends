@@ -31,6 +31,15 @@ class Car {
         this.friction = 0.005;
         this.turnSpeed = 0.03;
 
+        // Wheel Animation
+        this.steeringAngle = 0;
+        this.maxSteeringAngle = BABYLON.Tools.ToRadians(18);
+
+        this.wheelRotation = 0;
+
+        this.steeringSpeed = BABYLON.Tools.ToRadians(80);
+        this.steeringReturnSpeed = BABYLON.Tools.ToRadians(120);
+
         this.loaded = false;
 
         console.log("✅ Car Created");
@@ -95,6 +104,17 @@ class Car {
 
             };
 
+            for (const wheel of Object.values(this.wheels)) {
+
+                if (wheel.rotationQuaternion) {
+
+                    wheel.rotation = wheel.rotationQuaternion.toEulerAngles();
+                    wheel.rotationQuaternion = null;
+
+                }
+
+            }
+
 
             // ----------------------------
             // Visual settings
@@ -119,6 +139,16 @@ class Car {
             this.root.position.copyFrom(
                 Config.CAR.START_POSITION
             );
+
+                // this.wheels.frontLeft.showBoundingBox = true;
+                // this.wheels.frontRight.showBoundingBox = true;
+                // this.wheels.rearLeft.showBoundingBox = true;
+                // this.wheels.rearRight.showBoundingBox = true;
+
+                // this.wheels.frontLeft.scaling.setAll(2);
+                // this.wheels.frontRight.scaling.setAll(2);
+
+                // window.testWheel = this.wheels.frontLeft;
 
             // Debug
             this.inspectVehicle(result.meshes);
@@ -234,6 +264,8 @@ class Car {
         this.root.position.addInPlace(
             forward.scale(this.speed)
         );
+
+        this.animateWheels(input);
 
     }
 
@@ -405,5 +437,73 @@ class Car {
         console.groupEnd();
 
     }
+
+    animateWheels(input) {
+
+    // ----------------------------
+    // Steering
+    // ----------------------------
+
+    if (input.left) {
+
+        this.steeringAngle +=
+            this.steeringSpeed * this.scene.getEngine().getDeltaTime() / 1000;
+
+    }
+
+    else if (input.right) {
+
+        this.steeringAngle -=
+            this.steeringSpeed * this.scene.getEngine().getDeltaTime() / 1000;
+
+    }
+
+    else {
+
+        // Return to center
+
+        if (this.steeringAngle > 0) {
+
+            this.steeringAngle -=
+                this.steeringReturnSpeed * this.scene.getEngine().getDeltaTime() / 1000;
+
+            if (this.steeringAngle < 0)
+                this.steeringAngle = 0;
+
+        }
+
+        if (this.steeringAngle < 0) {
+
+            this.steeringAngle +=
+                this.steeringReturnSpeed * this.scene.getEngine().getDeltaTime() / 1000;
+
+            if (this.steeringAngle > 0)
+                this.steeringAngle = 0;
+
+        }
+
+    }
+
+    // Clamp
+
+    this.steeringAngle = BABYLON.Scalar.Clamp(
+
+        this.steeringAngle,
+
+        -this.maxSteeringAngle,
+
+        this.maxSteeringAngle
+
+    );
+
+    // Rotate front wheels
+
+    this.wheels.frontLeft.rotation.y =
+        this.steeringAngle;
+
+    this.wheels.frontRight.rotation.y =
+        this.steeringAngle;
+
+}
 
 }
