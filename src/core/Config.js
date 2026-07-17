@@ -58,6 +58,10 @@ class Config {
         // Rotation (adjust after testing)
         ROTATION_Y: 0,
 
+        MAX_STEER_LOW_SPEED: 35,
+
+        MAX_STEER_HIGH_SPEED: 25,
+
         // Visual offset
         OFFSET: new BABYLON.Vector3(
             0,

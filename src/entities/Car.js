@@ -33,12 +33,12 @@ class Car {
 
         // Wheel Animation
         this.steeringAngle = 0;
-        this.maxSteeringAngle = BABYLON.Tools.ToRadians(18);
+        this.maxSteeringAngle = BABYLON.Tools.ToRadians(Config.MAX_STEER_LOW_SPEED);
 
         this.wheelRotation = 0;
 
-        this.steeringSpeed = BABYLON.Tools.ToRadians(80);
-        this.steeringReturnSpeed = BABYLON.Tools.ToRadians(120);
+        this.steeringSpeed = BABYLON.Tools.ToRadians(140);
+        this.steeringReturnSpeed = BABYLON.Tools.ToRadians(200);
 
         this.loaded = false;
 
@@ -115,6 +115,26 @@ class Car {
 
             }
 
+            this.wheelPivots = {
+
+                frontLeft: this.createWheelPivot(
+                    this.wheels.frontLeft
+                ),
+
+                frontRight: this.createWheelPivot(
+                    this.wheels.frontRight
+                ),
+
+                rearLeft: this.createWheelPivot(
+                    this.wheels.rearLeft
+                ),
+
+                rearRight: this.createWheelPivot(
+                    this.wheels.rearRight
+                )
+
+            };
+
 
             // ----------------------------
             // Visual settings
@@ -140,15 +160,15 @@ class Car {
                 Config.CAR.START_POSITION
             );
 
-                // this.wheels.frontLeft.showBoundingBox = true;
-                // this.wheels.frontRight.showBoundingBox = true;
-                // this.wheels.rearLeft.showBoundingBox = true;
-                // this.wheels.rearRight.showBoundingBox = true;
+            // this.wheels.frontLeft.showBoundingBox = true;
+            // this.wheels.frontRight.showBoundingBox = true;
+            // this.wheels.rearLeft.showBoundingBox = true;
+            // this.wheels.rearRight.showBoundingBox = true;
 
-                // this.wheels.frontLeft.scaling.setAll(2);
-                // this.wheels.frontRight.scaling.setAll(2);
+            // this.wheels.frontLeft.scaling.setAll(2);
+            // this.wheels.frontRight.scaling.setAll(2);
 
-                // window.testWheel = this.wheels.frontLeft;
+            // window.testWheel = this.wheels.frontLeft;
 
             // Debug
             this.inspectVehicle(result.meshes);
@@ -265,7 +285,9 @@ class Car {
             forward.scale(this.speed)
         );
 
-        this.animateWheels(input);
+        const dt = this.scene.getEngine().getDeltaTime();
+
+        this.animateWheels(input, dt);
 
     }
 
@@ -438,72 +460,118 @@ class Car {
 
     }
 
-    animateWheels(input) {
+    animateWheels(input, dt) {
 
-    // ----------------------------
-    // Steering
-    // ----------------------------
+        // ----------------------------
+        // Steering
+        // ----------------------------
 
-    if (input.left) {
-
-        this.steeringAngle +=
-            this.steeringSpeed * this.scene.getEngine().getDeltaTime() / 1000;
-
-    }
-
-    else if (input.right) {
-
-        this.steeringAngle -=
-            this.steeringSpeed * this.scene.getEngine().getDeltaTime() / 1000;
-
-    }
-
-    else {
-
-        // Return to center
-
-        if (this.steeringAngle > 0) {
-
-            this.steeringAngle -=
-                this.steeringReturnSpeed * this.scene.getEngine().getDeltaTime() / 1000;
-
-            if (this.steeringAngle < 0)
-                this.steeringAngle = 0;
-
-        }
-
-        if (this.steeringAngle < 0) {
+        if (input.left) {
 
             this.steeringAngle +=
-                this.steeringReturnSpeed * this.scene.getEngine().getDeltaTime() / 1000;
-
-            if (this.steeringAngle > 0)
-                this.steeringAngle = 0;
+                this.steeringSpeed * dt / 1000;
 
         }
 
+        else if (input.right) {
+
+            this.steeringAngle -=
+                this.steeringSpeed * dt / 1000;
+
+        }
+
+        else {
+
+            // Return to center
+
+            if (this.steeringAngle > 0) {
+
+                this.steeringAngle -=
+                    this.steeringReturnSpeed * dt / 1000;
+
+                if (this.steeringAngle < 0)
+                    this.steeringAngle = 0;
+
+            }
+
+            if (this.steeringAngle < 0) {
+
+                this.steeringAngle +=
+                    this.steeringReturnSpeed * dt / 1000;
+
+                if (this.steeringAngle > 0)
+                    this.steeringAngle = 0;
+
+            }
+
+        }
+
+        // Clamp
+
+        // Steering becomes smaller as speed increases
+
+        const speedRatio = BABYLON.Scalar.Clamp(
+            Math.abs(this.speed) / this.maxSpeed,
+            0,
+            1
+        );
+
+        const maxAngle = BABYLON.Scalar.Lerp(
+
+            BABYLON.Tools.ToRadians(Config.CAR.MAX_STEER_LOW_SPEED), // Low speed
+
+            BABYLON.Tools.ToRadians(Config.CAR.MAX_STEER_HIGH_SPEED), // High speed
+
+            speedRatio
+
+        );
+
+        // Clamp steering to the current maximum angle
+
+        this.steeringAngle = BABYLON.Scalar.Clamp(
+
+            this.steeringAngle,
+
+            -maxAngle,
+
+            maxAngle
+
+        );
+
+        // Rotate front wheels
+
+        this.wheelPivots.frontLeft.rotation.y = this.steeringAngle;
+        this.wheelPivots.frontRight.rotation.y = this.steeringAngle;
+
     }
 
-    // Clamp
+    createWheelPivot(wheel) {
 
-    this.steeringAngle = BABYLON.Scalar.Clamp(
+        const center =
+            wheel.getBoundingInfo()
+                .boundingBox
+                .centerWorld
+                .clone();
 
-        this.steeringAngle,
+        const pivot = new BABYLON.TransformNode(
+            wheel.name + "_Pivot",
+            this.scene
+        );
 
-        -this.maxSteeringAngle,
+        // Parent pivot where wheel currently is
+        pivot.parent = wheel.parent;;
 
-        this.maxSteeringAngle
+        // Place pivot at wheel center
+        pivot.setAbsolutePosition(center);
 
-    );
+        // Preserve wheel world transform
+        wheel.setParent(pivot, true);
 
-    // Rotate front wheels
+        // Reset wheel local transform
+        wheel.scaling.set(1, 1, 1);
 
-    this.wheels.frontLeft.rotation.y =
-        this.steeringAngle;
+        return pivot;
 
-    this.wheels.frontRight.rotation.y =
-        this.steeringAngle;
-
-}
+    }
 
 }
