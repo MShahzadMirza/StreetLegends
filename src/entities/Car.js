@@ -30,6 +30,7 @@ class Car {
         this.brakeForce = 0.02;
         this.friction = 0.005;
         this.turnSpeed = 0.03;
+        this.wheelSpinMultiplier = 10;
 
         // Wheel Animation
         this.steeringAngle = 0;
@@ -531,7 +532,9 @@ class Car {
         // Convert travelled distance into wheel rotation
 
         this.wheelRotation +=
-            this.speed / this.wheelRadius;
+            (this.speed / this.wheelRadius) *
+            (dt / 1000) *
+            this.wheelSpinMultiplier;
 
         this.wheels.frontLeft.rotation.x =
             this.wheelRotation;
