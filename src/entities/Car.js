@@ -57,6 +57,12 @@ class Car {
             // Keep imported hierarchy intact
             result.meshes[0].parent = this.modelRoot;
 
+            const importedRoot = result.meshes[0];
+
+            console.log("Imported Root Position", importedRoot.position);
+            console.log("Imported Root Rotation", importedRoot.rotation);
+            console.log("Imported Root Scaling", importedRoot.scaling);
+
             // ----------------------------
             // Save mesh references
             // ----------------------------
@@ -107,7 +113,7 @@ class Car {
 
             // Center the model
             this.centerModel(result.meshes);
-            this.alignToGround();
+            this.alignToGround(this.modelRoot);
 
             // Gameplay position
             this.root.position.copyFrom(
@@ -119,7 +125,23 @@ class Car {
 
             this.loaded = true;
 
+            this.validateVehicle();
+
             console.log("✅ Car Loaded");
+
+            console.log("Root Position", this.root.position);
+
+            console.log("Model Position", this.modelRoot.position);
+
+            console.log("Body Position", this.body.position);
+
+            console.log("Front Left", this.wheels.frontLeft.position);
+
+            console.log("Front Right", this.wheels.frontRight.position);
+
+            console.log("Rear Left", this.wheels.rearLeft.position);
+
+            console.log("Rear Right", this.wheels.rearRight.position);
 
 
         }
@@ -215,17 +237,18 @@ class Car {
 
     }
 
-    alignToGround() {
+    alignToGround(importedRoot) {
 
-        if (!this.body)
-            return;
+        const bounds = importedRoot.getHierarchyBoundingVectors();
 
-        const box = this.body.getBoundingInfo().boundingBox;
+        console.log("Hierarchy Min:", bounds.min.y);
+        console.log("Hierarchy Max:", bounds.max.y);
 
-        const bottom = box.minimum.y;
+        const bottom = bounds.min.y;
 
         this.modelRoot.position.y =
-            -bottom * Config.CAR.SCALE;
+            -bottom +
+            Config.CAR.GROUND_CLEARANCE;
 
     }
 
@@ -239,17 +262,39 @@ class Car {
             return;
 
         const box = body.getBoundingInfo().boundingBox;
-
         const center = box.center;
 
-        this.modelRoot.position.x = -center.x * Config.CAR.SCALE;
-        this.modelRoot.position.z = -center.z * Config.CAR.SCALE;
+        this.modelRoot.position.x =
+            (-center.x * Config.CAR.SCALE) +
+            Config.CAR.OFFSET.x;
+
+        this.modelRoot.position.z =
+            (-center.z * Config.CAR.SCALE) +
+            Config.CAR.OFFSET.z;
 
     }
 
     inspectVehicle(meshes) {
 
         console.group("🚗 Vehicle Inspector");
+
+        meshes.forEach(mesh => {
+
+            console.log({
+
+                name: mesh.name,
+
+                position: mesh.position,
+
+                rotation: mesh.rotation,
+
+                scaling: mesh.scaling,
+
+                parent: mesh.parent?.name
+
+            });
+
+        });
 
         meshes.forEach(mesh => {
 
@@ -286,5 +331,79 @@ class Car {
 
     }
 
+    validateVehicle() {
+
+
+        if (Config.DEBUG.SHOW_CAR_CENTER) {
+            // create marker
+            const marker = BABYLON.MeshBuilder.CreateSphere(
+                "Center",
+                {
+                    diameter: 0.25
+                },
+                this.scene
+            );
+
+            marker.parent = this.root;
+
+            const mat = new BABYLON.StandardMaterial(
+                "centerMat",
+                this.scene
+            );
+
+            mat.emissiveColor = BABYLON.Color3.Red();
+
+            marker.material = mat;
+
+            marker.position.y = 3;
+        }
+
+        if (Config.DEBUG.SHOW_FORWARD_VECTOR) {
+            // create line
+            const line = BABYLON.MeshBuilder.CreateLines(
+                "Forward",
+                {
+                    points: [
+                        BABYLON.Vector3.Zero(),
+                        new BABYLON.Vector3(0, 0, 5)
+                    ]
+                },
+                this.scene
+            );
+
+            line.color = BABYLON.Color3.Blue();
+
+            line.parent = this.root;
+        }
+
+
+        console.group("🚗 Vehicle Validation");
+
+        console.log("Body:", !!this.body);
+        console.log("Glass:", !!this.glass);
+
+        console.log("Front Left:", !!this.wheels.frontLeft);
+        console.log("Front Right:", !!this.wheels.frontRight);
+        console.log("Rear Left:", !!this.wheels.rearLeft);
+        console.log("Rear Right:", !!this.wheels.rearRight);
+
+
+        console.table({
+
+            Body: this.body.getBoundingInfo().boundingBox.minimum.y,
+
+            FL: this.wheels.frontLeft.getBoundingInfo().boundingBox.minimum.y,
+
+            FR: this.wheels.frontRight.getBoundingInfo().boundingBox.minimum.y,
+
+            RL: this.wheels.rearLeft.getBoundingInfo().boundingBox.minimum.y,
+
+            RR: this.wheels.rearRight.getBoundingInfo().boundingBox.minimum.y
+
+        });
+
+        console.groupEnd();
+
+    }
 
 }

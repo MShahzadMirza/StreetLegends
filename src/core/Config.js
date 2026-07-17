@@ -53,6 +53,8 @@ class Config {
         // Visual adjustments
         SCALE: 0.008,
 
+        GROUND_CLEARANCE: 0.01,
+
         // Rotation (adjust after testing)
         ROTATION_Y: 0,
 
@@ -71,5 +73,15 @@ class Config {
         )
 
     };
+
+    static DEBUG = {
+
+    SHOW_CAR_CENTER: true,
+
+    SHOW_FORWARD_VECTOR: true,
+
+    SHOW_BOUNDING_BOX: false
+
+};
 
 }
