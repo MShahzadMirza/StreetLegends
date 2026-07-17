@@ -11,6 +11,18 @@ class Car {
 
         this.scene = scene;
 
+        this.root = new BABYLON.TransformNode(
+            "car",
+            scene
+        );
+
+        this.modelRoot = new BABYLON.TransformNode(
+            "carModel",
+            scene
+        );
+
+        this.modelRoot.parent = this.root;
+
         // Movement
         this.speed = 0;
         this.maxSpeed = 0.4;
@@ -19,96 +31,68 @@ class Car {
         this.friction = 0.005;
         this.turnSpeed = 0.03;
 
-        this.create();
+        this.loaded = false;
 
         console.log("✅ Car Created");
 
     }
 
-    create() {
 
-        // Root
-        this.root = new BABYLON.TransformNode(
-            "car",
-            this.scene
-        );
+    async initialize() {
 
-        this.modelRoot = new BABYLON.TransformNode(
-            "carModel",
-            this.scene
-        );
+        try {
 
-        this.modelRoot.parent = this.root;
+            const result = await BABYLON.SceneLoader.ImportMeshAsync(
 
-        BABYLON.SceneLoader.ImportMesh(
+                "",
 
-            "",
+                Config.CAR.MODEL_PATH,
 
-            Config.CAR.MODEL_PATH,
+                Config.CAR.MODEL_FILE,
 
-            Config.CAR.MODEL_FILE,
+                this.scene
 
-            this.scene,
+            );
 
-            (meshes) => {
+            // Keep imported hierarchy intact
+            result.meshes[0].parent = this.modelRoot;
 
-                // Parent ONLY the imported root
-                meshes[0].parent = this.modelRoot;
+            // Visual adjustments
+            this.modelRoot.scaling.setAll(
+                Config.CAR.SCALE
+            );
 
-                // Visual settings
-                this.modelRoot.scaling.setAll(
-                    Config.CAR.SCALE
-                );
+            this.modelRoot.rotation.y =
+                Config.CAR.ROTATION_Y;
 
-                this.modelRoot.rotation.y =
-                    Config.CAR.ROTATION_Y;
+            this.modelRoot.position.copyFrom(
+                Config.CAR.OFFSET
+            );
 
-                this.modelRoot.position.copyFrom(
-                    Config.CAR.OFFSET
-                );
+            // Gameplay position
+            this.root.position.copyFrom(
+                Config.CAR.START_POSITION
+            );
 
-                // Physics / gameplay position
-                this.root.position.copyFrom(
-                    Config.CAR.START_POSITION
-                );
+            this.loaded = true;
 
-                console.log("✅ Lamborghini Loaded");
+            console.log("✅ Car Loaded");
 
-            }
+        }
+        catch (error) {
 
-        );
+            console.error("❌ Failed to load car");
 
-    }
+            console.error(error);
 
-    createWheel(x, y, z) {
-
-        const wheel = BABYLON.MeshBuilder.CreateCylinder(
-            "wheel",
-            {
-                diameter: 0.7,
-                height: 0.4
-            },
-            this.scene
-        );
-
-        wheel.rotation.z = Math.PI / 2;
-
-        wheel.position.set(x, y, z);
-
-        wheel.parent = this.root;
-
-        const material = new BABYLON.StandardMaterial(
-            "wheelMat",
-            this.scene
-        );
-
-        material.diffuseColor = BABYLON.Color3.Black();
-
-        wheel.material = material;
+        }
 
     }
 
     update(input) {
+
+        if (!this.loaded)
+            return;
 
         // Acceleration
 
