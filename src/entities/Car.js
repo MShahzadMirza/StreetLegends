@@ -47,8 +47,8 @@ class Car {
 
         // Wheel Animation
         this.steeringAngle = 0;
-        this.maxSteeringAngleLowSpeed = BABYLON.Tools.ToRadians(Config.CAR.MAX_STEER_LOW_SPEED);
-        this.maxSteeringAngleHighSpeed = BABYLON.Tools.ToRadians(Config.CAR.MAX_STEER_HIGH_SPEED);
+        this.minSteeringAngle = BABYLON.Tools.ToRadians(Config.CAR.MAX_STEER_LOW_SPEED);
+        this.maxSteeringAngle = BABYLON.Tools.ToRadians(Config.CAR.MAX_STEER_HIGH_SPEED);
 
 
         this.wheelRotation = 0;
@@ -289,20 +289,21 @@ class Car {
         );
 
         // Steering
+        // ----------------------------
+        // Vehicle Turning
+        // ----------------------------
 
         if (Math.abs(this.speed) > 0.01) {
 
-            if (input.left) {
+            const turnAmount =
 
-                this.root.rotation.y -= this.turnSpeed;
+                (this.steeringAngle / this.maxSteeringAngle) *
 
-            }
+                this.turnSpeed *
 
-            if (input.right) {
+                (Math.abs(this.speed) / this.maxSpeed);
 
-                this.root.rotation.y += this.turnSpeed;
-
-            }
+            this.root.rotation.y -= turnAmount;
 
         }
 
@@ -553,9 +554,9 @@ class Car {
 
         const maxAngle = BABYLON.Scalar.Lerp(
 
-            this.maxSteeringAngleLowSpeed, // Low speed
+            this.minSteeringAngle, // Low speed
 
-            this.maxSteeringAngleHighSpeed, // High speed
+            this.maxSteeringAngle, // High speed
 
             speedRatio
 
