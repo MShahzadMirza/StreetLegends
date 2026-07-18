@@ -171,6 +171,12 @@ class Car {
 
             }
 
+            for (const [name, wheel] of Object.entries(this.wheels)) {
+
+                wheel.basePosition = wheel.position.clone();
+
+            }
+
             // ----------------------------
             // Visual settings
             // ----------------------------
@@ -363,6 +369,8 @@ class Car {
         this.animateWheels(input, dt);
 
         this.updateSuspension();
+
+        this.animateSuspension();
 
         this.animateBody(input);
 
@@ -663,7 +671,7 @@ class Car {
                 this.suspension.rearRight) * 0.5;
 
         const suspensionRoll =
-            (rightHeight - leftHeight) * 0.4;
+            (leftHeight - rightHeight) * 0.4;
 
         const frontHeight =
             (this.suspension.frontLeft +
@@ -759,10 +767,10 @@ class Car {
         let targetPitch = suspensionPitch;
 
         if (input.forward)
-            targetPitch = -this.maxPitch;
+            targetPitch += -this.maxPitch;
 
         else if (input.backward)
-            targetPitch = this.maxPitch;
+            targetPitch += this.maxPitch;
 
         this.bodyPitch = BABYLON.Scalar.Lerp(
 
@@ -814,6 +822,21 @@ class Car {
             this.suspension[name] = hit.hit
                 ? hit.distance
                 : 0.40;
+
+        }
+
+    }
+
+    animateSuspension() {
+
+        for (const [name, wheel] of Object.entries(this.wheels)) {
+
+            const compression =
+                0.40 - this.suspension[name];
+
+            wheel.position.y =
+                wheel.basePosition.y +
+                compression;
 
         }
 
