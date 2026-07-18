@@ -55,8 +55,9 @@ class Config {
 
         GROUND_CLEARANCE: 0.01,
 
-        // Rotation (adjust after testing)
         ROTATION_Y: 0,
+        // Rotation (adjust after testing)
+        // ROTATION_Y: Math.PI / 2,
 
         MAX_STEER_LOW_SPEED: 35,
 

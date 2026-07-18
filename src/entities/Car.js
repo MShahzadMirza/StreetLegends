@@ -56,6 +56,14 @@ class Car {
 
         this.bodySmoothness = 0.08;
 
+        this.bodyBounce = 0;
+
+        this.maxBounce = 0.05;
+
+        this.bounceSmoothness = 0.08;
+
+        this.previousSpeed = 0;
+
 
         // Wheel Animation
         this.steeringAngle = 0;
@@ -164,6 +172,8 @@ class Car {
             // Center the model
             this.centerModel(result.meshes);
             this.alignToGround(this.modelRoot);
+
+            this.baseBodyHeight = this.modelRoot.position.y;
 
             // Gameplay position
             this.root.position.copyFrom(
@@ -625,6 +635,49 @@ class Car {
 
     animateBody(input) {
 
+        const acceleration =
+            this.speed - this.previousSpeed;
+
+        this.previousSpeed = this.speed;
+
+        let targetBounce = 0;
+
+        // Accelerating
+        if (acceleration > 0) {
+
+            targetBounce =
+                -this.maxBounce *
+                BABYLON.Scalar.Clamp(
+                    acceleration * 40,
+                    0,
+                    1
+                );
+
+        }
+
+        // Braking
+        else if (acceleration < 0) {
+
+            targetBounce =
+                this.maxBounce *
+                BABYLON.Scalar.Clamp(
+                    -acceleration * 40,
+                    0,
+                    1
+                );
+
+        }
+
+        this.bodyBounce = BABYLON.Scalar.Lerp(
+
+            this.bodyBounce,
+
+            targetBounce,
+
+            this.bounceSmoothness
+
+        );
+
         // ---------- Roll ----------
 
         const speedRatio = Math.abs(this.speed) / this.maxSpeed;
@@ -674,6 +727,9 @@ class Car {
         this.modelRoot.rotation.z = this.bodyRoll;
 
         this.modelRoot.rotation.x = this.bodyPitch;
+
+        this.modelRoot.position.y =
+            this.baseBodyHeight + this.bodyBounce;
 
     }
 
