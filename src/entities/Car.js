@@ -44,6 +44,18 @@ class Car {
 
         this.airResistance = 0.004;
 
+        // ----------------------------
+        // Body Movement
+        // ----------------------------
+
+        this.bodyRoll = 0;
+        this.bodyPitch = 0;
+
+        this.maxRoll = BABYLON.Tools.ToRadians(5);
+        this.maxPitch = BABYLON.Tools.ToRadians(2.5);
+
+        this.bodySmoothness = 0.08;
+
 
         // Wheel Animation
         this.steeringAngle = 0;
@@ -322,6 +334,8 @@ class Car {
         const dt = this.scene.getEngine().getDeltaTime();
 
         this.animateWheels(input, dt);
+
+        this.animateBody(input);
 
     }
 
@@ -605,6 +619,61 @@ class Car {
 
         this.wheels.rearRight.rotation.x =
             this.wheelRotation;
+
+    }
+
+
+    animateBody(input) {
+
+        // ---------- Roll ----------
+
+        const speedRatio = Math.abs(this.speed) / this.maxSpeed;
+
+        let targetRoll =
+            (this.steeringAngle / this.maxSteeringAngle) *
+            this.maxRoll *
+            speedRatio;
+
+        if (input.left)
+            targetRoll =
+                targetRoll;
+
+        else if (input.right)
+            targetRoll = -targetRoll;
+
+        this.bodyRoll = BABYLON.Scalar.Lerp(
+
+            this.bodyRoll,
+
+            targetRoll,
+
+            this.bodySmoothness
+
+        );
+
+        // ---------- Pitch ----------
+
+        let targetPitch = 0;
+
+        if (input.forward)
+            targetPitch = -this.maxPitch;
+
+        else if (input.backward)
+            targetPitch = this.maxPitch;
+
+        this.bodyPitch = BABYLON.Scalar.Lerp(
+
+            this.bodyPitch,
+
+            targetPitch,
+
+            this.bodySmoothness
+
+        );
+
+        this.modelRoot.rotation.z = this.bodyRoll;
+
+        this.modelRoot.rotation.x = this.bodyPitch;
 
     }
 
