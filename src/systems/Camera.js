@@ -6,45 +6,87 @@ Follow Camera
 */
 
 class CameraController {
-    constructor(scene, target) {
-        this.scene = scene;
 
+    constructor(scene, target) {
+
+        this.scene = scene;
         this.target = target;
 
-        this.distance = 8;
+        this.baseDistance = 8;
+        this.maxDistance = 11;
 
-        this.height = 4;
+        this.baseHeight = 4;
+        this.maxHeight = 5;
+
+        this.followSmoothness = 0.08;
 
         this.camera = new BABYLON.FreeCamera(
-            'camera',
+            "camera",
             new BABYLON.Vector3(0, 5, -10),
-            scene,
+            scene
         );
 
         this.camera.minZ = 0.1;
+
     }
 
     update() {
+
+        const speedRatio = BABYLON.Scalar.Clamp(
+            Math.abs(this.target.speed) / this.target.maxSpeed,
+            0,
+            1
+        );
+
+        const distance = BABYLON.Scalar.Lerp(
+            this.baseDistance,
+            this.maxDistance,
+            speedRatio
+        );
+
+        const height = BABYLON.Scalar.Lerp(
+            this.baseHeight,
+            this.maxHeight,
+            speedRatio
+        );
+
         const rotation = this.target.root.rotation.y;
 
-        const x =
-            this.target.root.position.x - Math.sin(rotation) * this.distance;
+        const desired = new BABYLON.Vector3(
 
-        const z =
-            this.target.root.position.z - Math.cos(rotation) * this.distance;
+            this.target.root.position.x -
+            Math.sin(rotation) * distance,
 
-        const y = this.target.root.position.y + this.height;
+            this.target.root.position.y +
+            height,
 
-        const desired = new BABYLON.Vector3(x, y, z);
+            this.target.root.position.z -
+            Math.cos(rotation) * distance
+
+        );
 
         this.camera.position = BABYLON.Vector3.Lerp(
+
             this.camera.position,
 
             desired,
 
-            0.1,
+            this.followSmoothness
+
         );
 
-        this.camera.setTarget(this.target.root.position);
+        const forward = this.target.root.forward.clone();
+
+        forward.y = 0;
+        forward.normalize();
+
+        const lookTarget =
+            this.target.root.position.add(
+                forward.scale(8)
+            );
+
+        this.camera.setTarget(lookTarget);
+
     }
+
 }
