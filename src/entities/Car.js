@@ -26,11 +26,24 @@ class Car {
         // Movement
         this.speed = 0;
         this.maxSpeed = 0.4;
-        this.acceleration = 0.01;
-        this.brakeForce = 0.02;
-        this.friction = 0.005;
         this.turnSpeed = 0.03;
         this.wheelSpinMultiplier = 10;
+
+        // ----------------------------
+        // Engine Physics
+        // ----------------------------
+
+        this.enginePower = 0.012;
+
+        this.reversePower = 0.007;
+
+        this.brakingPower = 0.025;
+
+        // Natural slowing
+        this.rollingResistance = 0.0025;
+
+        this.airResistance = 0.004;
+
 
         // Wheel Animation
         this.steeringAngle = 0;
@@ -72,7 +85,7 @@ class Car {
 
             const importedRoot = result.meshes[0];
 
-            if(Config.DEBUG.ENABLED){
+            if (Config.DEBUG.ENABLED) {
                 console.log("Imported Root Position", importedRoot.position);
                 console.log("Imported Root Rotation", importedRoot.rotation);
                 console.log("Imported Root Scaling", importedRoot.scaling);
@@ -145,7 +158,7 @@ class Car {
                 Config.CAR.START_POSITION
             );
 
-            if(Config.DEBUG.ENABLED){
+            if (Config.DEBUG.ENABLED) {
 
                 // this.wheels.frontLeft.showBoundingBox = true;
                 // this.wheels.frontRight.showBoundingBox = true;
@@ -199,48 +212,80 @@ class Car {
             return;
 
         // Acceleration
+        // ----------------------------
+        // Engine
+        // ----------------------------
 
         if (input.forward) {
 
-            this.speed += this.acceleration;
+            this.speed += this.enginePower;
 
         }
+
+        // ----------------------------
+        // Reverse / Brake
+        // ----------------------------
 
         if (input.backward) {
 
-            this.speed -= this.acceleration;
+            if (this.speed > 0) {
+
+                this.speed -= this.brakingPower;
+
+            }
+            else {
+
+                this.speed -= this.reversePower;
+
+            }
 
         }
 
-        // Friction
+        // ----------------------------
+        // Natural Drag
+        // ----------------------------
 
         if (!input.forward && !input.backward) {
 
+            const drag =
+
+                this.rollingResistance +
+
+                this.airResistance *
+                Math.abs(this.speed);
+
             if (this.speed > 0) {
 
-                this.speed -= this.friction;
+                this.speed = Math.max(
+                    0,
+                    this.speed - drag
+                );
 
             }
 
-            if (this.speed < 0) {
+            else if (this.speed < 0) {
 
-                this.speed += this.friction;
-
-            }
-
-            if (Math.abs(this.speed) < this.friction) {
-
-                this.speed = 0;
+                this.speed = Math.min(
+                    0,
+                    this.speed + drag
+                );
 
             }
 
         }
 
-        // Clamp speed
+        // ----------------------------
+        // Clamp Speed
+        // ----------------------------
 
-        this.speed = Math.max(
-            -this.maxSpeed / 2,
-            Math.min(this.speed, this.maxSpeed)
+        this.speed = BABYLON.Scalar.Clamp(
+
+            this.speed,
+
+            -this.maxSpeed * 0.45,
+
+            this.maxSpeed
+
         );
 
         // Steering
