@@ -34,7 +34,9 @@ class Car {
 
         // Wheel Animation
         this.steeringAngle = 0;
-        this.maxSteeringAngle = BABYLON.Tools.ToRadians(Config.MAX_STEER_LOW_SPEED);
+        this.maxSteeringAngleLowSpeed = BABYLON.Tools.ToRadians(Config.CAR.MAX_STEER_LOW_SPEED);
+        this.maxSteeringAngleHighSpeed = BABYLON.Tools.ToRadians(Config.CAR.MAX_STEER_HIGH_SPEED);
+
 
         this.wheelRotation = 0;
         this.wheelRadius = 0.35;
@@ -70,9 +72,11 @@ class Car {
 
             const importedRoot = result.meshes[0];
 
-            console.log("Imported Root Position", importedRoot.position);
-            console.log("Imported Root Rotation", importedRoot.rotation);
-            console.log("Imported Root Scaling", importedRoot.scaling);
+            if(Config.DEBUG.ENABLED){
+                console.log("Imported Root Position", importedRoot.position);
+                console.log("Imported Root Rotation", importedRoot.rotation);
+                console.log("Imported Root Scaling", importedRoot.scaling);
+            }
 
             // ----------------------------
             // Save mesh references
@@ -141,18 +145,21 @@ class Car {
                 Config.CAR.START_POSITION
             );
 
-            // this.wheels.frontLeft.showBoundingBox = true;
-            // this.wheels.frontRight.showBoundingBox = true;
-            // this.wheels.rearLeft.showBoundingBox = true;
-            // this.wheels.rearRight.showBoundingBox = true;
+            if(Config.DEBUG.ENABLED){
 
-            // this.wheels.frontLeft.scaling.setAll(2);
-            // this.wheels.frontRight.scaling.setAll(2);
+                // this.wheels.frontLeft.showBoundingBox = true;
+                // this.wheels.frontRight.showBoundingBox = true;
+                // this.wheels.rearLeft.showBoundingBox = true;
+                // this.wheels.rearRight.showBoundingBox = true;
 
-            // window.testWheel = this.wheels.frontLeft;
+                // this.wheels.frontLeft.scaling.setAll(2);
+                // this.wheels.frontRight.scaling.setAll(2);
 
-            // Debug
-            this.inspectVehicle(result.meshes);
+                // window.testWheel = this.wheels.frontLeft;
+
+                // Debug
+                this.inspectVehicle(result.meshes);
+            }
 
             this.loaded = true;
 
@@ -256,11 +263,11 @@ class Car {
 
         // Move Forward
 
-        const forward = new BABYLON.Vector3(
-            Math.sin(this.root.rotation.y),
-            0,
-            Math.cos(this.root.rotation.y)
-        );
+        const forward =
+            this.root.forward.clone();
+
+        forward.y = 0;
+        forward.normalize();
 
         this.root.position.addInPlace(
             forward.scale(this.speed)
@@ -310,6 +317,8 @@ class Car {
     }
 
     inspectVehicle(meshes) {
+
+        if (!Config.DEBUG.SHOW_CAR_CENTER) { return }
 
         console.group("🚗 Vehicle Inspector");
 
@@ -499,9 +508,9 @@ class Car {
 
         const maxAngle = BABYLON.Scalar.Lerp(
 
-            BABYLON.Tools.ToRadians(Config.CAR.MAX_STEER_LOW_SPEED), // Low speed
+            this.maxSteeringAngleLowSpeed, // Low speed
 
-            BABYLON.Tools.ToRadians(Config.CAR.MAX_STEER_HIGH_SPEED), // High speed
+            this.maxSteeringAngleHighSpeed, // High speed
 
             speedRatio
 
@@ -523,7 +532,7 @@ class Car {
 
         this.wheels.frontLeft.rotation.y = this.steeringAngle;
         this.wheels.frontRight.rotation.y = this.steeringAngle;
-        
+
 
         // ----------------------------
         // Wheel Spin
@@ -531,9 +540,12 @@ class Car {
 
         // Convert travelled distance into wheel rotation
 
-        this.wheelRotation +=
+        const rotationDelta =
             (this.speed / this.wheelRadius) *
-            (dt / 1000) *
+            (dt / 1000);
+
+        this.wheelRotation +=
+            rotationDelta *
             this.wheelSpinMultiplier;
 
         this.wheels.frontLeft.rotation.x =

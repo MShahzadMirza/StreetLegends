@@ -80,12 +80,16 @@ class Config {
 
     static DEBUG = {
 
-    SHOW_CAR_CENTER: true,
+        ENABLED: true,
 
-    SHOW_FORWARD_VECTOR: true,
+        INSPECT_VEHICLE: true,
 
-    SHOW_BOUNDING_BOX: false
+        SHOW_CAR_CENTER: true,
 
-};
+        SHOW_FORWARD_VECTOR: true,
+
+        SHOW_BOUNDING_BOX: false
+
+    };
 
 }
