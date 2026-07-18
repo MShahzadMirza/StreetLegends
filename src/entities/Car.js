@@ -346,7 +346,7 @@ class Car {
 
                 this.turnSpeed *
 
-                (Math.abs(this.speed) / this.maxSpeed);
+                (this.speed / this.maxSpeed);
 
             this.root.rotation.y -= turnAmount;
 
