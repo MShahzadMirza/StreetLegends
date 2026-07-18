@@ -13,6 +13,7 @@ class Input {
         this.backward = false;
         this.left = false;
         this.right = false;
+        this.handbrake = false,
 
         this.initialize();
 
@@ -45,6 +46,9 @@ class Input {
                 case "arrowright":
                     this.right = true;
                     break;
+                case " ":
+                    this.handbrake = true;
+                    break;
 
             }
 
@@ -72,6 +76,9 @@ class Input {
                 case "d":
                 case "arrowright":
                     this.right = false;
+                    break;
+                case " ":
+                    this.handbrake = false;
                     break;
 
             }

@@ -58,6 +58,12 @@ Main Entry
             console.log("Left");
 
         }
+        
+        if (input.handbrake) {
+
+            console.log("space");
+
+        }
 
     });
 

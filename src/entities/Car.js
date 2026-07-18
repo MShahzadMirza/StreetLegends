@@ -40,6 +40,28 @@ class Car {
         this.wheelSpinMultiplier = 10;
 
         // ----------------------------
+        // Drift
+        // ----------------------------
+
+        this.isDrifting = false;
+
+        this.driftAmount = 0;
+
+        this.maxDrift = 0.35;
+
+        this.driftBuildSpeed = 0.08;
+
+        this.driftRecoverSpeed = 0.05;
+
+        // Visual Drift
+
+        this.driftAngle = 0;
+
+        this.maxDriftAngle = BABYLON.Tools.ToRadians(12);
+
+        this.driftSmoothness = 0.08;
+
+        // ----------------------------
         // Engine Physics
         // ----------------------------
 
@@ -256,6 +278,43 @@ class Car {
         if (!this.loaded)
             return;
 
+
+        const steeringInput =
+            Math.abs(this.steeringAngle / this.maxSteeringAngle);
+
+        this.isDrifting =
+
+            input.handbrake &&
+
+            Math.abs(this.speed) > this.maxSpeed * 0.25 &&
+
+            steeringInput > 0.3;
+
+        if (this.isDrifting) {
+
+            this.driftAmount = BABYLON.Scalar.Clamp(
+
+                this.driftAmount + this.driftBuildSpeed,
+
+                0,
+
+                this.maxDrift
+
+            );
+
+        }
+        else {
+
+            this.driftAmount = Math.max(
+
+                0,
+
+                this.driftAmount - this.driftRecoverSpeed
+
+            );
+
+        }
+
         // Acceleration
         // ----------------------------
         // Engine
@@ -340,13 +399,21 @@ class Car {
 
         if (Math.abs(this.speed) > 0.01) {
 
-            const turnAmount =
+            let turnAmount =
 
                 (this.steeringAngle / this.maxSteeringAngle) *
 
                 this.turnSpeed *
 
                 (this.speed / this.maxSpeed);
+
+            if (this.isDrifting) {
+
+                turnAmount *=
+
+                    1 + this.driftAmount;
+
+            }
 
             this.root.rotation.y -= turnAmount;
 
@@ -373,6 +440,8 @@ class Car {
         this.animateSuspension();
 
         this.animateBody(input);
+
+        this.animateDrift(input);
 
     }
 
@@ -839,6 +908,36 @@ class Car {
                 compression;
 
         }
+
+    }
+
+    animateDrift(input) {
+
+        let targetAngle = 0;
+
+        if (this.isDrifting) {
+
+            targetAngle =
+
+                -(this.steeringAngle / this.maxSteeringAngle) *
+
+                this.maxDriftAngle;
+
+        }
+
+        this.driftAngle = BABYLON.Scalar.Lerp(
+
+            this.driftAngle,
+
+            targetAngle,
+
+            this.driftSmoothness
+
+        );
+
+        this.modelRoot.rotation.y =
+            Config.CAR.ROTATION_Y +
+            this.driftAngle;
 
     }
 
