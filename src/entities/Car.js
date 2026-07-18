@@ -11,6 +11,16 @@ class Car {
 
         this.scene = scene;
 
+        /* this.scene.meshes.forEach(mesh => {
+
+            if (mesh.metadata?.drivable) {
+
+                console.log("✅ Drivable:", mesh.name);
+
+            }
+
+        }); */
+
         this.root = new BABYLON.TransformNode(
             "car",
             scene
@@ -76,6 +86,13 @@ class Car {
 
         this.steeringSpeed = BABYLON.Tools.ToRadians(140);
         this.steeringReturnSpeed = BABYLON.Tools.ToRadians(200);
+
+        this.suspension = {
+            frontLeft: 0.40,
+            frontRight: 0.40,
+            rearLeft: 0.40,
+            rearRight: 0.40
+        };
 
         this.loaded = false;
 
@@ -344,6 +361,8 @@ class Car {
         const dt = this.scene.getEngine().getDeltaTime();
 
         this.animateWheels(input, dt);
+
+        this.updateSuspension();
 
         this.animateBody(input);
 
@@ -635,6 +654,40 @@ class Car {
 
     animateBody(input) {
 
+        const leftHeight =
+            (this.suspension.frontLeft +
+                this.suspension.rearLeft) * 0.5;
+
+        const rightHeight =
+            (this.suspension.frontRight +
+                this.suspension.rearRight) * 0.5;
+
+        const suspensionRoll =
+            (rightHeight - leftHeight) * 0.4;
+
+        const frontHeight =
+            (this.suspension.frontLeft +
+                this.suspension.frontRight) * 0.5;
+
+        const rearHeight =
+            (this.suspension.rearLeft +
+                this.suspension.rearRight) * 0.5;
+
+        const suspensionPitch =
+            (frontHeight - rearHeight) * 0.3;
+
+        const averageHeight =
+
+            (this.suspension.frontLeft +
+                this.suspension.frontRight +
+                this.suspension.rearLeft +
+                this.suspension.rearRight) / 4;
+
+        const suspensionBounce =
+            (0.40 - averageHeight) * 0.2;
+
+        // acceleration
+
         const acceleration =
             this.speed - this.previousSpeed;
 
@@ -682,17 +735,14 @@ class Car {
 
         const speedRatio = Math.abs(this.speed) / this.maxSpeed;
 
-        let targetRoll =
-            (this.steeringAngle / this.maxSteeringAngle) *
+        let steeringRoll =
+            - (this.steeringAngle / this.maxSteeringAngle) *
             this.maxRoll *
             speedRatio;
 
-        if (input.left)
-            targetRoll =
-                targetRoll;
-
-        else if (input.right)
-            targetRoll = -targetRoll;
+        let targetRoll =
+            steeringRoll +
+            suspensionRoll;
 
         this.bodyRoll = BABYLON.Scalar.Lerp(
 
@@ -706,7 +756,7 @@ class Car {
 
         // ---------- Pitch ----------
 
-        let targetPitch = 0;
+        let targetPitch = suspensionPitch;
 
         if (input.forward)
             targetPitch = -this.maxPitch;
@@ -729,7 +779,43 @@ class Car {
         this.modelRoot.rotation.x = this.bodyPitch;
 
         this.modelRoot.position.y =
-            this.baseBodyHeight + this.bodyBounce;
+            this.baseBodyHeight +
+            this.bodyBounce +
+            suspensionBounce;
+
+    }
+
+    updateSuspension() {
+
+        for (const [name, wheel] of Object.entries(this.wheels)) {
+
+            const start =
+                wheel.getAbsolutePosition();
+
+            const ray = new BABYLON.Ray(
+
+                start,
+
+                BABYLON.Vector3.Down(),
+
+                2
+
+            );
+
+            const hit =
+                this.scene.pickWithRay(
+
+                    ray,
+
+                    mesh => mesh.metadata?.drivable === true
+
+                );
+
+            this.suspension[name] = hit.hit
+                ? hit.distance
+                : 0.40;
+
+        }
 
     }
 

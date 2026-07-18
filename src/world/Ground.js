@@ -22,7 +22,7 @@ class Ground {
         // Create Ground
         this.mesh = BABYLON.MeshBuilder.CreateGround(
 
-            "ground",
+            "Ground",
 
             {
                 width: 200,
@@ -46,6 +46,10 @@ class Ground {
         );
 
         this.mesh.material = material;
+
+        this.mesh.metadata = {
+            drivable: true
+        };
 
     }
 

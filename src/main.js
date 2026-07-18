@@ -26,6 +26,9 @@ Main Entry
     const road = new Road(scene);
 
     // Environment
+    const testTrack = new TestTrack(scene);
+    
+    // Environment
     const environment = new Environment(scene);
 
     const input = new Input();

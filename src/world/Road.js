@@ -58,6 +58,10 @@ class Road {
 
         this.mesh.material = material;
 
+        this.mesh.metadata = {
+            drivable: true
+        };
+
     }
 
     createCenterLine() {
