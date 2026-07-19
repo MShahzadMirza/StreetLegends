@@ -127,6 +127,10 @@ class Car {
 
         this.loaded = false;
 
+        this.skidMarks = new SkidMarks(scene);
+
+        this.skidTimer = 0;
+
         console.log("✅ Car Created");
 
     }
@@ -473,6 +477,8 @@ class Car {
         this.animateDrift(input);
 
         this.updateTireSmoke();
+
+        this.updateSkidMarks(dt);
 
     }
 
@@ -969,97 +975,126 @@ class Car {
 
     }
 
-createTireSmoke() {
+    createTireSmoke() {
 
-    this.leftSmoke = this.createSmokeSystem("LeftSmoke");
-    this.rightSmoke = this.createSmokeSystem("RightSmoke");
-
-}
-
-createSmokeSystem(name) {
-
-    const smoke = new BABYLON.ParticleSystem(
-        name,
-        150,
-        this.scene
-    );
-
-    smoke.particleTexture = new BABYLON.Texture(
-        "Assets/Textures/smoke.png",
-        this.scene
-    );
-
-    smoke.minSize = 0.15;
-    smoke.maxSize = 0.45;
-
-    smoke.minLifeTime = 0.25;
-    smoke.maxLifeTime = 0.7;
-
-    smoke.emitRate = 0;
-
-    smoke.blendMode =
-        BABYLON.ParticleSystem.BLENDMODE_ONEONE;
-
-    smoke.direction1 =
-        new BABYLON.Vector3(-0.2, 0.5, -0.2);
-
-    smoke.direction2 =
-        new BABYLON.Vector3(0.2, 0.7, 0.2);
-
-    smoke.minEmitPower = 0.2;
-    smoke.maxEmitPower = 0.5;
-
-    smoke.gravity =
-        new BABYLON.Vector3(0, 0.4, 0);
-
-    smoke.color1 =
-        new BABYLON.Color4(0.75,0.75,0.75,0.6);
-
-    smoke.color2 =
-        new BABYLON.Color4(0.6,0.6,0.6,0.4);
-
-    smoke.colorDead =
-        new BABYLON.Color4(0.6,0.6,0.6,0);
-
-    smoke.start();
-
-    return smoke;
-
-}
-
-updateTireSmoke() {
-
-    const drifting =
-
-        this.isDrifting &&
-
-        Math.abs(this.speed) > 0.12 &&
-
-        Math.abs(this.steeringAngle) >
-        BABYLON.Tools.ToRadians(12);
-
-    if (!drifting) {
-
-        this.leftSmoke.emitRate = 0;
-        this.rightSmoke.emitRate = 0;
-
-        return;
+        this.leftSmoke = this.createSmokeSystem("LeftSmoke");
+        this.rightSmoke = this.createSmokeSystem("RightSmoke");
 
     }
 
-    const emitRate =
-        80 +
-        Math.abs(this.speed) * 400;
+    createSmokeSystem(name) {
 
-    this.leftSmoke.emitRate = emitRate;
-    this.rightSmoke.emitRate = emitRate;
+        const smoke = new BABYLON.ParticleSystem(
+            name,
+            150,
+            this.scene
+        );
 
-    this.leftSmoke.emitter =
-        this.wheels.rearLeft.getAbsolutePosition();
+        smoke.particleTexture = new BABYLON.Texture(
+            "Assets/Textures/smoke.png",
+            this.scene
+        );
 
-    this.rightSmoke.emitter =
-        this.wheels.rearRight.getAbsolutePosition();
+        smoke.minSize = 0.15;
+        smoke.maxSize = 0.45;
 
-}
+        smoke.minLifeTime = 0.25;
+        smoke.maxLifeTime = 0.7;
+
+        smoke.emitRate = 0;
+
+        smoke.blendMode =
+            BABYLON.ParticleSystem.BLENDMODE_ONEONE;
+
+        smoke.direction1 =
+            new BABYLON.Vector3(-0.2, 0.5, -0.2);
+
+        smoke.direction2 =
+            new BABYLON.Vector3(0.2, 0.7, 0.2);
+
+        smoke.minEmitPower = 0.2;
+        smoke.maxEmitPower = 0.5;
+
+        smoke.gravity =
+            new BABYLON.Vector3(0, 0.4, 0);
+
+        smoke.color1 =
+            new BABYLON.Color4(0.75, 0.75, 0.75, 0.6);
+
+        smoke.color2 =
+            new BABYLON.Color4(0.6, 0.6, 0.6, 0.4);
+
+        smoke.colorDead =
+            new BABYLON.Color4(0.6, 0.6, 0.6, 0);
+
+        smoke.start();
+
+        return smoke;
+
+    }
+
+    updateTireSmoke() {
+
+        const drifting =
+
+            this.isDrifting &&
+
+            Math.abs(this.speed) > 0.12 &&
+
+            Math.abs(this.steeringAngle) >
+            BABYLON.Tools.ToRadians(12);
+
+        if (!drifting) {
+
+            this.leftSmoke.emitRate = 0;
+            this.rightSmoke.emitRate = 0;
+
+            return;
+
+        }
+
+        const emitRate =
+            80 +
+            Math.abs(this.speed) * 400;
+
+        this.leftSmoke.emitRate = emitRate;
+        this.rightSmoke.emitRate = emitRate;
+
+        this.leftSmoke.emitter =
+            this.wheels.rearLeft.getAbsolutePosition();
+
+        this.rightSmoke.emitter =
+            this.wheels.rearRight.getAbsolutePosition();
+
+    }
+
+    updateSkidMarks(dt) {
+
+        this.skidTimer += dt;
+
+        if (this.skidTimer < 15)
+            return;
+
+        this.skidTimer = 0;
+
+        if (!this.isDrifting)
+            return;
+
+        const left =
+            this.wheels.rearLeft.getAbsolutePosition();
+
+        const right =
+            this.wheels.rearRight.getAbsolutePosition();
+
+        const direction = Math.atan2(
+            this.root.forward.x,
+            this.root.forward.z
+        );
+
+        this.skidMarks.addMark(left, direction);
+        this.skidMarks.addMark(right, direction);
+
+
+    }
 
 }
