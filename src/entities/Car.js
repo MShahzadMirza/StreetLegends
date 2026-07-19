@@ -969,89 +969,97 @@ class Car {
 
     }
 
-    createTireSmoke() {
+createTireSmoke() {
 
-        this.smokeSystems = [];
+    this.leftSmoke = this.createSmokeSystem("LeftSmoke");
+    this.rightSmoke = this.createSmokeSystem("RightSmoke");
 
-        const rearWheels = [
+}
 
-            this.wheels.rearLeft,
-            this.wheels.rearRight
+createSmokeSystem(name) {
 
-        ];
+    const smoke = new BABYLON.ParticleSystem(
+        name,
+        150,
+        this.scene
+    );
 
-        for (const wheel of rearWheels) {
+    smoke.particleTexture = new BABYLON.Texture(
+        "Assets/Textures/smoke.png",
+        this.scene
+    );
 
-            const smoke = new BABYLON.ParticleSystem(
-                wheel.name + "_Smoke",
-                200,
-                this.scene
-            );
+    smoke.minSize = 0.15;
+    smoke.maxSize = 0.45;
 
-            smoke.particleTexture =
-                new BABYLON.Texture(
-                    "https://playground.babylonjs.com/textures/flare.png",
-                    this.scene
-                );
+    smoke.minLifeTime = 0.25;
+    smoke.maxLifeTime = 0.7;
 
-            smoke.emitter = wheel;
+    smoke.emitRate = 0;
 
-            smoke.minEmitBox =
-                BABYLON.Vector3.Zero();
+    smoke.blendMode =
+        BABYLON.ParticleSystem.BLENDMODE_ONEONE;
 
-            smoke.maxEmitBox =
-                BABYLON.Vector3.Zero();
+    smoke.direction1 =
+        new BABYLON.Vector3(-0.2, 0.5, -0.2);
 
-            smoke.color1 =
-                new BABYLON.Color4(0.85, 0.85, 0.85, 0.35);
+    smoke.direction2 =
+        new BABYLON.Vector3(0.2, 0.7, 0.2);
 
-            smoke.color2 =
-                new BABYLON.Color4(0.65, 0.65, 0.65, 0.20);
+    smoke.minEmitPower = 0.2;
+    smoke.maxEmitPower = 0.5;
 
-            smoke.colorDead =
-                new BABYLON.Color4(0, 0, 0, 0);
+    smoke.gravity =
+        new BABYLON.Vector3(0, 0.4, 0);
 
-            smoke.minSize = 0.15;
-            smoke.maxSize = 0.45;
+    smoke.color1 =
+        new BABYLON.Color4(0.75,0.75,0.75,0.6);
 
-            smoke.minLifeTime = 0.3;
-            smoke.maxLifeTime = 0.7;
+    smoke.color2 =
+        new BABYLON.Color4(0.6,0.6,0.6,0.4);
 
-            smoke.emitRate = 0;
+    smoke.colorDead =
+        new BABYLON.Color4(0.6,0.6,0.6,0);
 
-            smoke.direction1 =
-                new BABYLON.Vector3(-0.2, 0.3, -0.2);
+    smoke.start();
 
-            smoke.direction2 =
-                new BABYLON.Vector3(0.2, 0.6, 0.2);
+    return smoke;
 
-            smoke.minEmitPower = 0.2;
-            smoke.maxEmitPower = 0.6;
+}
 
-            smoke.gravity =
-                new BABYLON.Vector3(0, 0, 0);
+updateTireSmoke() {
 
-            smoke.start();
+    const drifting =
 
-            this.smokeSystems.push(smoke);
+        this.isDrifting &&
 
-        }
+        Math.abs(this.speed) > 0.12 &&
 
-    }
+        Math.abs(this.steeringAngle) >
+        BABYLON.Tools.ToRadians(12);
 
-    updateTireSmoke() {
+    if (!drifting) {
 
-        const drifting =
-            this.isDrifting &&
-            Math.abs(this.speed) > 0.15;
+        this.leftSmoke.emitRate = 0;
+        this.rightSmoke.emitRate = 0;
 
-        for (const smoke of this.smokeSystems) {
-
-            smoke.emitRate =
-                drifting ? 120 : 0;
-
-        }
+        return;
 
     }
+
+    const emitRate =
+        80 +
+        Math.abs(this.speed) * 400;
+
+    this.leftSmoke.emitRate = emitRate;
+    this.rightSmoke.emitRate = emitRate;
+
+    this.leftSmoke.emitter =
+        this.wheels.rearLeft.getAbsolutePosition();
+
+    this.rightSmoke.emitter =
+        this.wheels.rearRight.getAbsolutePosition();
+
+}
 
 }
