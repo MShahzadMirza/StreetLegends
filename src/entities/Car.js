@@ -62,6 +62,15 @@ class Car {
         this.driftSmoothness = 0.08;
 
         // ----------------------------
+        // Tire Grip
+        // ----------------------------
+
+        this.frontGrip = 1.0;
+        this.rearGrip = 1.0;
+
+        this.minRearGrip = 0.55;
+
+        // ----------------------------
         // Engine Physics
         // ----------------------------
 
@@ -315,6 +324,25 @@ class Car {
 
         }
 
+        if (this.isDrifting) {
+
+            this.rearGrip = BABYLON.Scalar.Lerp(
+                this.rearGrip,
+                this.minRearGrip,
+                0.08
+            );
+
+        }
+        else {
+
+            this.rearGrip = BABYLON.Scalar.Lerp(
+                this.rearGrip,
+                1.0,
+                0.08
+            );
+
+        }
+
         // Acceleration
         // ----------------------------
         // Engine
@@ -399,21 +427,20 @@ class Car {
 
         if (Math.abs(this.speed) > 0.01) {
 
+            const speedRatio =
+                this.speed / this.maxSpeed;
+
             let turnAmount =
-
                 (this.steeringAngle / this.maxSteeringAngle) *
-
                 this.turnSpeed *
+                speedRatio;
 
-                (this.speed / this.maxSpeed);
+            // Rear tires with less grip allow the car to rotate more.
+            
+            const driftMultiplier =
+                1 + (1 - this.rearGrip) * 1.5;
 
-            if (this.isDrifting) {
-
-                turnAmount *=
-
-                    1 + this.driftAmount;
-
-            }
+            turnAmount *= driftMultiplier;
 
             this.root.rotation.y -= turnAmount;
 
@@ -731,34 +758,31 @@ class Car {
 
     animateBody(input) {
 
+        const fl = this.suspension.frontLeft;
+        const fr = this.suspension.frontRight;
+        const rl = this.suspension.rearLeft;
+        const rr = this.suspension.rearRight;
+
         const leftHeight =
-            (this.suspension.frontLeft +
-                this.suspension.rearLeft) * 0.5;
+            (fl + rl) * 0.5;
 
         const rightHeight =
-            (this.suspension.frontRight +
-                this.suspension.rearRight) * 0.5;
+            (fr + rr) * 0.5;
 
         const suspensionRoll =
             (leftHeight - rightHeight) * 0.4;
 
         const frontHeight =
-            (this.suspension.frontLeft +
-                this.suspension.frontRight) * 0.5;
+            (fl + fr) * 0.5;
 
         const rearHeight =
-            (this.suspension.rearLeft +
-                this.suspension.rearRight) * 0.5;
+            (rl + rr) * 0.5;
 
         const suspensionPitch =
             (frontHeight - rearHeight) * 0.3;
 
         const averageHeight =
-
-            (this.suspension.frontLeft +
-                this.suspension.frontRight +
-                this.suspension.rearLeft +
-                this.suspension.rearRight) / 4;
+            (fl + fr + rl + rr) / 4;
 
         const suspensionBounce =
             (0.40 - averageHeight) * 0.2;
