@@ -254,6 +254,8 @@ class Car {
 
             this.validateVehicle();
 
+            this.createTireSmoke();
+
             console.log("✅ Car Loaded");
 
             console.log("Root Position", this.root.position);
@@ -436,7 +438,7 @@ class Car {
                 speedRatio;
 
             // Rear tires with less grip allow the car to rotate more.
-            
+
             const driftMultiplier =
                 1 + (1 - this.rearGrip) * 1.5;
 
@@ -469,6 +471,8 @@ class Car {
         this.animateBody(input);
 
         this.animateDrift(input);
+
+        this.updateTireSmoke();
 
     }
 
@@ -962,6 +966,91 @@ class Car {
         this.modelRoot.rotation.y =
             Config.CAR.ROTATION_Y +
             this.driftAngle;
+
+    }
+
+    createTireSmoke() {
+
+        this.smokeSystems = [];
+
+        const rearWheels = [
+
+            this.wheels.rearLeft,
+            this.wheels.rearRight
+
+        ];
+
+        for (const wheel of rearWheels) {
+
+            const smoke = new BABYLON.ParticleSystem(
+                wheel.name + "_Smoke",
+                200,
+                this.scene
+            );
+
+            smoke.particleTexture =
+                new BABYLON.Texture(
+                    "https://playground.babylonjs.com/textures/flare.png",
+                    this.scene
+                );
+
+            smoke.emitter = wheel;
+
+            smoke.minEmitBox =
+                BABYLON.Vector3.Zero();
+
+            smoke.maxEmitBox =
+                BABYLON.Vector3.Zero();
+
+            smoke.color1 =
+                new BABYLON.Color4(0.85, 0.85, 0.85, 0.35);
+
+            smoke.color2 =
+                new BABYLON.Color4(0.65, 0.65, 0.65, 0.20);
+
+            smoke.colorDead =
+                new BABYLON.Color4(0, 0, 0, 0);
+
+            smoke.minSize = 0.15;
+            smoke.maxSize = 0.45;
+
+            smoke.minLifeTime = 0.3;
+            smoke.maxLifeTime = 0.7;
+
+            smoke.emitRate = 0;
+
+            smoke.direction1 =
+                new BABYLON.Vector3(-0.2, 0.3, -0.2);
+
+            smoke.direction2 =
+                new BABYLON.Vector3(0.2, 0.6, 0.2);
+
+            smoke.minEmitPower = 0.2;
+            smoke.maxEmitPower = 0.6;
+
+            smoke.gravity =
+                new BABYLON.Vector3(0, 0, 0);
+
+            smoke.start();
+
+            this.smokeSystems.push(smoke);
+
+        }
+
+    }
+
+    updateTireSmoke() {
+
+        const drifting =
+            this.isDrifting &&
+            Math.abs(this.speed) > 0.15;
+
+        for (const smoke of this.smokeSystems) {
+
+            smoke.emitRate =
+                drifting ? 120 : 0;
+
+        }
 
     }
 
