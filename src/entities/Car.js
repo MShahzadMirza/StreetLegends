@@ -127,7 +127,14 @@ class Car {
 
         this.loaded = false;
 
-        this.skidMarks = new SkidMarks(scene);
+        // this.skidTrail = new TrailRenderer(scene);
+        this.leftTrail =
+            new WheelTrailRenderer(this.scene);
+
+        this.rightTrail =
+            new WheelTrailRenderer(this.scene);
+
+
 
         this.skidTimer = 0;
 
@@ -1067,12 +1074,41 @@ class Car {
             this.wheels.rearRight.getAbsolutePosition();
 
     }
+    /* using TrailRenderer now
+        updateSkidMarks(dt) {
+    
+            this.skidTimer += dt;
+    
+            if (this.skidTimer < 15)
+                return;
+    
+            this.skidTimer = 0;
+    
+            if (!this.isDrifting)
+                return;
+    
+            const left =
+                this.wheels.rearLeft.getAbsolutePosition();
+    
+            const right =
+                this.wheels.rearRight.getAbsolutePosition();
+    
+            const direction = Math.atan2(
+                this.root.forward.x,
+                this.root.forward.z
+            );
+    
+            this.skidMarks.addMark(left, direction);
+            this.skidMarks.addMark(right, direction);
+    
+    
+        } */
 
     updateSkidMarks(dt) {
 
         this.skidTimer += dt;
 
-        if (this.skidTimer < 15)
+        if (this.skidTimer < 20)
             return;
 
         this.skidTimer = 0;
@@ -1080,20 +1116,29 @@ class Car {
         if (!this.isDrifting)
             return;
 
-        const left =
-            this.wheels.rearLeft.getAbsolutePosition();
+        // this.skidTrail.add(
 
-        const right =
-            this.wheels.rearRight.getAbsolutePosition();
+        //     this.wheels.rearLeft.getAbsolutePosition(),
 
-        const direction = Math.atan2(
-            this.root.forward.x,
-            this.root.forward.z
+        //     this.wheels.rearRight.getAbsolutePosition()
+
+        // );
+
+        this.leftTrail.add(
+
+            this.wheels.rearLeft.getAbsolutePosition(),
+
+            this.root.forward
+
         );
 
-        this.skidMarks.addMark(left, direction);
-        this.skidMarks.addMark(right, direction);
+        this.rightTrail.add(
 
+            this.wheels.rearRight.getAbsolutePosition(),
+
+            this.root.forward
+
+        );
 
     }
 

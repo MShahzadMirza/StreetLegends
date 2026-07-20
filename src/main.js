@@ -49,19 +49,19 @@ Main Entry
 
         if (input.forward) {
 
-            console.log("Forward");
+            // console.log("Forward");
 
         }
 
         if (input.left) {
 
-            console.log("Left");
+            // console.log("Left");
 
         }
         
         if (input.handbrake) {
 
-            console.log("space");
+            // console.log("space");
 
         }
 
