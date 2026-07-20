@@ -84,7 +84,7 @@ class Car {
         this.minRearGrip = 0.55;
 
         // ----------------------------
-        // Engine RPM
+        // Engine / Gearbox
         // ----------------------------
 
         this.idleRPM = 900;
@@ -94,6 +94,28 @@ class Car {
         this.targetRPM = this.idleRPM;
 
         this.rpmSmoothness = 0.08;
+
+        // Gearbox
+
+        this.currentGear = 0;
+
+        this.maxGear = 5;
+
+        this.gearRatios = [
+
+            0,
+
+            0.18,   // 1st
+
+            0.36,   // 2nd
+
+            0.56,   // 3rd
+
+            0.78,   // 4th
+
+            1.00    // 5th
+
+        ];
 
         // ----------------------------
         // Engine Physics
@@ -559,17 +581,17 @@ class Car {
 
         this.updateRPM(input);
 
-        if (Config.DEBUG.ENABLED) {
+        console.log(
 
-            console.log(
+            "Gear",
 
-                "RPM",
+            this.currentGear,
 
-                Math.round(this.currentRPM)
+            "RPM",
 
-            );
+            Math.round(this.currentRPM)
 
-        }
+        );
 
         if (this.isBurnout) {
 
@@ -1253,10 +1275,77 @@ class Car {
 
     updateRPM(input) {
 
-        // Speed ratio
-        const speedRatio = BABYLON.Scalar.Clamp(
+        // Neutral
+        if (Math.abs(this.speed) < 0.01) {
 
-            Math.abs(this.speed) / this.maxSpeed,
+            this.currentGear = 0;
+
+            this.targetRPM = this.idleRPM;
+
+            this.currentRPM = BABYLON.Scalar.Lerp(
+
+                this.currentRPM,
+
+                this.targetRPM,
+
+                this.rpmSmoothness
+
+            );
+
+            return;
+
+        }
+
+        // Start driving
+        if (this.currentGear === 0) {
+
+            this.currentGear = 1;
+
+        }
+
+        const ratio =
+            Math.abs(this.speed) / this.maxSpeed;
+
+        // Automatic upshift
+
+        while (
+
+            this.currentGear < this.maxGear &&
+
+            ratio > this.gearRatios[this.currentGear]
+
+        ) {
+
+            this.currentGear++;
+
+        }
+
+        // Automatic downshift
+
+        while (
+
+            this.currentGear > 1 &&
+
+            ratio < this.gearRatios[this.currentGear - 1] - 0.05
+
+        ) {
+
+            this.currentGear--;
+
+        }
+
+        // Progress inside current gear
+
+        const minRatio =
+            this.gearRatios[this.currentGear - 1];
+
+        const maxRatio =
+            this.gearRatios[this.currentGear];
+
+        const gearProgress = BABYLON.Scalar.Clamp(
+
+            (ratio - minRatio) /
+            (maxRatio - minRatio),
 
             0,
 
@@ -1264,34 +1353,40 @@ class Car {
 
         );
 
-        // Base RPM from vehicle speed
-        this.targetRPM =
+        this.targetRPM = BABYLON.Scalar.Lerp(
 
-            BABYLON.Scalar.Lerp(
+            2200,
 
-                this.idleRPM,
+            this.maxRPM,
 
-                this.maxRPM,
+            gearProgress
 
-                speedRatio
+        );
 
-            );
+        // Idle
 
-        // Rev engine while accelerating
-        if (input.forward) {
+        if (Math.abs(this.speed) < 0.01) {
 
-            this.targetRPM += 1200;
+            this.targetRPM = this.idleRPM;
 
         }
 
-        // Burnout revs
+        // Throttle blip
+
+        if (input.forward) {
+
+            this.targetRPM += 300;
+
+        }
+
+        // Burnout
+
         if (this.isBurnout) {
 
             this.targetRPM = this.maxRPM;
 
         }
 
-        // Clamp
         this.targetRPM = BABYLON.Scalar.Clamp(
 
             this.targetRPM,
@@ -1302,7 +1397,6 @@ class Car {
 
         );
 
-        // Smooth movement
         this.currentRPM = BABYLON.Scalar.Lerp(
 
             this.currentRPM,
