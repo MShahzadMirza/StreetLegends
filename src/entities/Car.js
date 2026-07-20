@@ -87,43 +87,43 @@ class Car {
         // Engine / Gearbox
         // ----------------------------
 
+        // ----------------------------
+        // Gearbox
+        // ----------------------------
+
+        this.currentGear = 0;
+
+        this.maxGear = 5;
+
         this.idleRPM = 900;
         this.maxRPM = 7500;
 
         this.currentRPM = this.idleRPM;
         this.targetRPM = this.idleRPM;
 
-        this.rpmSmoothness = 0.08;
-
-        // Gearbox
-
-        this.currentGear = 0;
-
-        this.maxGear = 5;
-
-        this.gearRatios = [
-
-            0,
-
-            3.20,   // 1st
-
-            2.10,   // 2nd
-
-            1.45,   // 3rd
-
-            1.10,   // 4th
-
-            0.85    // 5th
-
-        ];
-
-        this.finalDrive = 3.9;
+        this.rpmSmoothness = 0.12;
 
         this.upshiftRPM = 6900;
-
         this.downshiftRPM = 2200;
 
-        this.speedToMetersPerSecond = 45;
+        // Speed ranges for each gear
+        // Based on maxSpeed = 1.2
+
+        this.gearSpeedRanges = [
+
+            0.00,
+
+            0.24,
+
+            0.48,
+
+            0.72,
+
+            0.96,
+
+            1.20
+
+        ];
 
         // ----------------------------
         // Engine Physics
@@ -1283,64 +1283,93 @@ class Car {
 
     updateRPM(input) {
 
+        const speed = Math.abs(this.speed);
+
         // ----------------------------
         // Neutral
         // ----------------------------
 
-        if (Math.abs(this.speed) < 0.01) {
+        if (speed < 0.02) {
 
             this.currentGear = 0;
 
             this.targetRPM = this.idleRPM;
 
-            this.currentRPM = BABYLON.Scalar.Lerp(
+        }
 
-                this.currentRPM,
-                this.targetRPM,
-                this.rpmSmoothness
+        else {
 
-            );
+            if (this.currentGear === 0)
+                this.currentGear = 1;
 
-            return;
+            // ----------------------------
+            // Automatic shifting
+            // ----------------------------
+
+            while (
+
+                this.currentGear < this.maxGear &&
+
+                speed > this.gearSpeedRanges[this.currentGear]
+
+            ) {
+
+                this.currentGear++;
+
+                this.currentRPM *= 0.62;
+
+            }
+
+            while (
+
+                this.currentGear > 1 &&
+
+                speed < this.gearSpeedRanges[this.currentGear - 1] - 0.05
+
+            ) {
+
+                this.currentGear--;
+
+                this.currentRPM *= 1.18;
+
+            }
+
+            // ----------------------------
+            // RPM inside current gear
+            // ----------------------------
+
+            const minSpeed =
+                this.gearSpeedRanges[this.currentGear - 1];
+
+            const maxSpeed =
+                this.gearSpeedRanges[this.currentGear];
+
+            const gearProgress =
+                BABYLON.Scalar.Clamp(
+
+                    (speed - minSpeed) /
+                    (maxSpeed - minSpeed),
+
+                    0,
+
+                    1
+
+                );
+
+            this.targetRPM =
+                BABYLON.Scalar.Lerp(
+
+                    2200,
+
+                    this.maxRPM,
+
+                    gearProgress
+
+                );
 
         }
 
-        // Leave Neutral
-
-        if (this.currentGear === 0) {
-
-            this.currentGear = 1;
-
-        }
-
-        // ----------------------------
-        // Wheel RPM
-        // ----------------------------
-
-        const speedMS =
-            Math.abs(this.speed) *
-            this.speedToMetersPerSecond;
-
-        const circumference =
-            2 * Math.PI * this.wheelRadius;
-
-        const wheelRPM =
-            (speedMS * 60) /
-            circumference;
-
-        this.targetRPM =
-
-            this.idleRPM +
-
-            wheelRPM *
-
-            this.gearRatios[this.currentGear] *
-
-            this.finalDrive;
-
-        // ----------------------------
         // Burnout
-        // ----------------------------
 
         if (this.isBurnout) {
 
@@ -1348,74 +1377,40 @@ class Car {
 
         }
 
-        // Small throttle response
+        // Throttle response
 
-        else if (input.forward) {
+        if (input.forward) {
 
-            this.targetRPM += 300;
-
-        }
-
-        // ----------------------------
-        // Clamp
-        // ----------------------------
-
-        this.targetRPM = BABYLON.Scalar.Clamp(
-
-            this.targetRPM,
-
-            this.idleRPM,
-
-            this.maxRPM
-
-        );
-
-        // ----------------------------
-        // Smooth RPM
-        // ----------------------------
-
-        this.currentRPM = BABYLON.Scalar.Lerp(
-
-            this.currentRPM,
-
-            this.targetRPM,
-
-            this.rpmSmoothness
-
-        );
-
-        // ----------------------------
-        // Automatic Gearbox
-        // ----------------------------
-
-        if (
-
-            this.currentRPM > this.upshiftRPM &&
-
-            this.currentGear < this.maxGear
-
-        ) {
-
-            this.currentGear++;
+            this.targetRPM += 250;
 
         }
 
-        else if (
+        this.targetRPM =
+            BABYLON.Scalar.Clamp(
 
-            this.currentRPM < this.downshiftRPM &&
+                this.targetRPM,
 
-            this.currentGear > 1
+                this.idleRPM,
 
-        ) {
+                this.maxRPM
 
-            this.currentGear--;
+            );
 
-        }
+        this.currentRPM =
+            BABYLON.Scalar.Lerp(
+
+                this.currentRPM,
+
+                this.targetRPM,
+
+                this.rpmSmoothness
+
+            );
 
         console.log(
             "Speed:", this.speed.toFixed(3),
             "Gear:", this.currentGear,
-            "WheelRPM:", wheelRPM.toFixed(0),
+            // "WheelRPM:", wheelRPM.toFixed(0),
             "TargetRPM:", Math.round(this.targetRPM),
             "CurrentRPM:", Math.round(this.currentRPM)
         );
