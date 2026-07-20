@@ -18,7 +18,9 @@ class WheelTrailRenderer {
 
         this.maxPoints = 180;
 
-        this.mesh = null;
+        this.currentMesh = null;
+
+        this.allMeshes = [];
 
         this.createMaterial();
 
@@ -92,9 +94,9 @@ class WheelTrailRenderer {
         if (this.leftEdge.length < 2)
             return;
 
-        if (!this.mesh) {
+        if (!this.currentMesh) {
 
-            this.mesh =
+            this.currentMesh =
                 BABYLON.MeshBuilder.CreateRibbon(
 
                     "Trail",
@@ -114,16 +116,16 @@ class WheelTrailRenderer {
 
                 );
 
-            this.mesh.material =
+            this.currentMesh.material =
                 this.material;
 
         }
 
         else {
 
-            this.mesh.dispose();
+            this.currentMesh.dispose();
 
-            this.mesh = BABYLON.MeshBuilder.CreateRibbon(
+            this.currentMesh = BABYLON.MeshBuilder.CreateRibbon(
 
                 "Trail",
 
@@ -143,9 +145,19 @@ class WheelTrailRenderer {
 
             );
 
-            this.mesh.material = this.material;
+            this.currentMesh.material = this.material;
+            this.allMeshes.push(this.currentMesh);
 
         }
+
+    }
+
+    startNewTrail() {
+
+        this.leftEdge = [];
+        this.rightEdge = [];
+
+        this.currentMesh = null;
 
     }
 

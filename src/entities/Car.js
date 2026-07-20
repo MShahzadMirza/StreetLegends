@@ -44,6 +44,7 @@ class Car {
         // ----------------------------
 
         this.isDrifting = false;
+        this.wasDrifting = false;
 
         this.driftAmount = 0;
 
@@ -1106,6 +1107,24 @@ class Car {
 
     updateSkidMarks(dt) {
 
+        // Drift ended
+        if (!this.isDrifting) {
+
+            this.wasDrifting = false;
+            return;
+
+        }
+
+        // Drift just started
+        if (!this.wasDrifting) {
+
+            this.leftTrail.startNewTrail();
+            this.rightTrail.startNewTrail();
+
+            this.wasDrifting = true;
+
+        }
+
         this.skidTimer += dt;
 
         if (this.skidTimer < 20)
@@ -1113,21 +1132,9 @@ class Car {
 
         this.skidTimer = 0;
 
-        if (!this.isDrifting)
-            return;
-
-        // this.skidTrail.add(
-
-        //     this.wheels.rearLeft.getAbsolutePosition(),
-
-        //     this.wheels.rearRight.getAbsolutePosition()
-
-        // );
-
         this.leftTrail.add(
 
             this.wheels.rearLeft.getAbsolutePosition(),
-
             this.root.forward
 
         );
@@ -1135,7 +1142,6 @@ class Car {
         this.rightTrail.add(
 
             this.wheels.rearRight.getAbsolutePosition(),
-
             this.root.forward
 
         );
