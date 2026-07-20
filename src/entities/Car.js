@@ -425,6 +425,12 @@ class Car {
 
             }
 
+            if (this.isBurnout) {
+
+                this.speed = Math.max(this.speed, 0.025);
+
+            }
+
         }
 
         // ----------------------------
@@ -484,10 +490,19 @@ class Car {
             const speedRatio =
                 this.speed / this.maxSpeed;
 
+            let grip = 1;
+
+            if (this.isBurnout) {
+
+                grip = this.burnout.gripMultiplier;
+
+            }
+
             let turnAmount =
                 (this.steeringAngle / this.maxSteeringAngle) *
                 this.turnSpeed *
-                speedRatio;
+                speedRatio *
+                grip;
 
             // Rear tires with less grip allow the car to rotate more.
 
