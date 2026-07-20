@@ -84,6 +84,18 @@ class Car {
         this.minRearGrip = 0.55;
 
         // ----------------------------
+        // Engine RPM
+        // ----------------------------
+
+        this.idleRPM = 900;
+        this.maxRPM = 7500;
+
+        this.currentRPM = this.idleRPM;
+        this.targetRPM = this.idleRPM;
+
+        this.rpmSmoothness = 0.08;
+
+        // ----------------------------
         // Engine Physics
         // ----------------------------
 
@@ -544,6 +556,20 @@ class Car {
         this.updateTireSmoke();
 
         this.updateSkidMarks(dt);
+
+        this.updateRPM(input);
+
+        if (Config.DEBUG.ENABLED) {
+
+            console.log(
+
+                "RPM",
+
+                Math.round(this.currentRPM)
+
+            );
+
+        }
 
         if (this.isBurnout) {
 
@@ -1222,6 +1248,70 @@ class Car {
             input.handbrake &&
 
             Math.abs(this.speed) < this.burnoutSpeedLimit;
+
+    }
+
+    updateRPM(input) {
+
+        // Speed ratio
+        const speedRatio = BABYLON.Scalar.Clamp(
+
+            Math.abs(this.speed) / this.maxSpeed,
+
+            0,
+
+            1
+
+        );
+
+        // Base RPM from vehicle speed
+        this.targetRPM =
+
+            BABYLON.Scalar.Lerp(
+
+                this.idleRPM,
+
+                this.maxRPM,
+
+                speedRatio
+
+            );
+
+        // Rev engine while accelerating
+        if (input.forward) {
+
+            this.targetRPM += 1200;
+
+        }
+
+        // Burnout revs
+        if (this.isBurnout) {
+
+            this.targetRPM = this.maxRPM;
+
+        }
+
+        // Clamp
+        this.targetRPM = BABYLON.Scalar.Clamp(
+
+            this.targetRPM,
+
+            this.idleRPM,
+
+            this.maxRPM
+
+        );
+
+        // Smooth movement
+        this.currentRPM = BABYLON.Scalar.Lerp(
+
+            this.currentRPM,
+
+            this.targetRPM,
+
+            this.rpmSmoothness
+
+        );
 
     }
 
