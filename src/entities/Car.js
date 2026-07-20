@@ -11,16 +11,6 @@ class Car {
 
         this.scene = scene;
 
-        /* this.scene.meshes.forEach(mesh => {
-
-            if (mesh.metadata?.drivable) {
-
-                console.log("✅ Drivable:", mesh.name);
-
-            }
-
-        }); */
-
         this.root = new BABYLON.TransformNode(
             "car",
             scene
@@ -61,6 +51,28 @@ class Car {
         this.maxDriftAngle = BABYLON.Tools.ToRadians(12);
 
         this.driftSmoothness = 0.08;
+
+        // ----------------------------
+        // Burnout
+        // ----------------------------
+
+        this.isBurnout = false;
+
+        this.burnoutSpeedLimit = 0.03;
+
+        this.burnout = {
+
+            speedLimit: 0.03,
+
+            wheelSpinMultiplier: 4,
+
+            smokeMultiplier: 3,
+
+            gripMultiplier: 0.35,
+
+            brakeForce: 0.015
+
+        };
 
         // ----------------------------
         // Tire Grip
@@ -113,7 +125,8 @@ class Car {
         this.maxSteeringAngle = BABYLON.Tools.ToRadians(Config.CAR.MAX_STEER_HIGH_SPEED);
 
 
-        this.wheelRotation = 0;
+        this.frontWheelRotation = 0;
+        this.rearWheelRotation = 0;
         this.wheelRadius = 0.35;
 
         this.steeringSpeed = BABYLON.Tools.ToRadians(140);
@@ -388,6 +401,33 @@ class Car {
         }
 
         // ----------------------------
+        // Handbrake
+        // ----------------------------
+
+        if (input.handbrake && Math.abs(this.speed) > 0.01) {
+
+            const handbrakeStrength = 0.015;
+
+            if (this.speed > 0) {
+
+                this.speed = Math.max(
+                    0,
+                    this.speed - handbrakeStrength
+                );
+
+            }
+            else {
+
+                this.speed = Math.min(
+                    0,
+                    this.speed + handbrakeStrength
+                );
+
+            }
+
+        }
+
+        // ----------------------------
         // Natural Drag
         // ----------------------------
 
@@ -474,6 +514,8 @@ class Car {
 
         const dt = this.scene.getEngine().getDeltaTime();
 
+        this.updateBurnout(input);
+
         this.animateWheels(input, dt);
 
         this.updateSuspension();
@@ -487,6 +529,12 @@ class Car {
         this.updateTireSmoke();
 
         this.updateSkidMarks(dt);
+
+        if (this.isBurnout) {
+
+            console.log("🔥 Burnout");
+
+        }
 
     }
 
@@ -751,25 +799,47 @@ class Car {
 
         // Convert travelled distance into wheel rotation
 
+        // ----------------------------
+        // Wheel Spin
+        // ----------------------------
+
         const rotationDelta =
             (this.speed / this.wheelRadius) *
             (dt / 1000);
 
-        this.wheelRotation +=
+        // Front wheels always match vehicle speed
+        this.frontWheelRotation +=
             rotationDelta *
             this.wheelSpinMultiplier;
 
+        // Rear wheels
+        if (this.isBurnout) {
+
+            this.rearWheelRotation +=
+                this.burnout.wheelSpinMultiplier *
+                this.wheelSpinMultiplier;
+
+        }
+        else {
+
+            this.rearWheelRotation +=
+                rotationDelta *
+                this.wheelSpinMultiplier;
+
+        }
+
+        // Apply rotations
         this.wheels.frontLeft.rotation.x =
-            this.wheelRotation;
+            this.frontWheelRotation;
 
         this.wheels.frontRight.rotation.x =
-            this.wheelRotation;
+            this.frontWheelRotation;
 
         this.wheels.rearLeft.rotation.x =
-            this.wheelRotation;
+            this.rearWheelRotation;
 
         this.wheels.rearRight.rotation.x =
-            this.wheelRotation;
+            this.rearWheelRotation;
 
     }
 
@@ -1052,7 +1122,10 @@ class Car {
             Math.abs(this.steeringAngle) >
             BABYLON.Tools.ToRadians(12);
 
-        if (!drifting) {
+        const burnout =
+            this.isBurnout;
+
+        if (!drifting && !burnout) {
 
             this.leftSmoke.emitRate = 0;
             this.rightSmoke.emitRate = 0;
@@ -1061,9 +1134,15 @@ class Car {
 
         }
 
-        const emitRate =
+        let emitRate =
             80 +
             Math.abs(this.speed) * 400;
+
+        if (burnout) {
+
+            emitRate *= this.burnout.smokeMultiplier;
+
+        }
 
         this.leftSmoke.emitRate = emitRate;
         this.rightSmoke.emitRate = emitRate;
@@ -1075,35 +1154,6 @@ class Car {
             this.wheels.rearRight.getAbsolutePosition();
 
     }
-    /* using TrailRenderer now
-        updateSkidMarks(dt) {
-    
-            this.skidTimer += dt;
-    
-            if (this.skidTimer < 15)
-                return;
-    
-            this.skidTimer = 0;
-    
-            if (!this.isDrifting)
-                return;
-    
-            const left =
-                this.wheels.rearLeft.getAbsolutePosition();
-    
-            const right =
-                this.wheels.rearRight.getAbsolutePosition();
-    
-            const direction = Math.atan2(
-                this.root.forward.x,
-                this.root.forward.z
-            );
-    
-            this.skidMarks.addMark(left, direction);
-            this.skidMarks.addMark(right, direction);
-    
-    
-        } */
 
     updateSkidMarks(dt) {
 
@@ -1145,6 +1195,18 @@ class Car {
             this.root.forward
 
         );
+
+    }
+
+    updateBurnout(input) {
+
+        this.isBurnout =
+
+            input.forward &&
+
+            input.handbrake &&
+
+            Math.abs(this.speed) < this.burnoutSpeedLimit;
 
     }
 
